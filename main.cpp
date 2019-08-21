@@ -11,13 +11,13 @@ void idle(unsigned long int countedFrames)
 		isingModel.Update();
 }
 
-void display()
+void display(GLFWwindow* window)
 {
 	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	isingModel.Draw();
-	//glfwSwapBuffers(window);
-	glFlush();
+	glfwSwapBuffers(window);
+	//glFlush();
 }
 
 void mouseButton(GLFWwindow* window, int button, int action, int mods)
@@ -68,14 +68,14 @@ int main(int argc, char *argv[])
 	// Initialization
 	if (!glfwInit())
 		return -1;
-	glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
+	//glfwWindowHint(GLFW_DOUBLEBUFFER, GL_FALSE);
 	GLFWwindow* window = glfwCreateWindow(ScreenWidth, ScreenHeight, "Ising model", nullptr, nullptr);
 	if (!window) {
 		glfwTerminate();
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-	//glfwSwapInterval(0);
+	glfwSwapInterval(0);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0.0, ScreenWidth, ScreenHeight, 0.0, -1.0, 1.0);
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 
 	// Event loop
 	unsigned long int frameCount = 0;
-	//double previousTime = glfwGetTime();  unsigned long int previousFrame = 0;
+	double previousTime = glfwGetTime();  unsigned long int previousFrame = 0;
 	while (!glfwWindowShouldClose(window)) {
 		++frameCount;
 
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 
 		idle(frameCount);
 		if (frameCount % 60 == 0)
-			display();
+			display(window);
 		glfwPollEvents();
 	}
 	glfwTerminate();

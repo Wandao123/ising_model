@@ -2,7 +2,7 @@
 #
 CC = g++
 COMPILE_OPTIONS = -std=c++14 -Og -I/usr/include/freetype2
-LINK_OPTIONS = -lm -O3 -lglfw -lGLU -lGL -lftgl #-lGLEW
+LINK_OPTIONS = -lm -O3 -lglfw -lGLU -lGL -lftgl -pthread
 TARGET = main
 SRCS = main.cpp ising_model.cpp
 OBJS = $(SRCS:.cpp=.o)

@@ -153,8 +153,8 @@ void IsingModel::Update()
 	};
 
 	//MetropolisAlgorithm();
-	//GlauberDynamics();
-	ProbabilisticCellularAutomata();
+	GlauberDynamics();
+	//ProbabilisticCellularAutomata();
 	if (isCooling) {
 		if (numSteps % CoolingInterval == 0)
 			temperature = coolingSchedule(numSteps);

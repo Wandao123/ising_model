@@ -57,7 +57,7 @@ private:
 #ifdef _WIN64
 	const std::string FontFile = "C:/Windows/Fonts/consola.ttf";
 #elif __linux__
-	const std::string FontFile = "/usr/share/fonts/truetype/LiberationMono-Regular.ttf";
+	const std::string FontFile = "/usr/share/fonts/TTF/LiberationMono-Regular.ttf";
 #endif
 	const unsigned int FontSize = 22;
 	const unsigned int NumDivision = 20;   // The variation of temperature
