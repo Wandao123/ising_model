@@ -46,6 +46,9 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		case GLFW_KEY_A:
 			isingModel.SwitchAutoCooling();
 			break;
+		case GLFW_KEY_C:
+			isingModel.ChangeAlgorithm();
+			break;
 		case GLFW_KEY_SPACE:
 			if (IsUpdating) {
 				IsUpdating = false;
@@ -99,8 +102,7 @@ int main(int argc, char *argv[])
 		}*/
 
 		idle(frameCount);
-		if (frameCount % 60 == 0)
-			display(window);
+		display(window);
 		glfwPollEvents();
 	}
 	glfwTerminate();

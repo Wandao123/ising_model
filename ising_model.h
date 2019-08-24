@@ -8,8 +8,8 @@
 #include <GLFW/glfw3.h>
 #include <FTGL/ftgl.h>
 
-constexpr int ScreenWidth = 512;
-constexpr int ScreenHeight = 640;
+constexpr int ScreenWidth = 600;
+constexpr int ScreenHeight = 800;
 enum class Status {
 	UpSpin = +1,
 	DownSpin = -1
@@ -20,11 +20,20 @@ int Modulo(int Dividend, int Divisor);
 
 class IsingModel {
 public:
+	enum class Algorithm : int {
+		Metropolis,
+		Glauber,
+		PCA,
+		HillClimbing,
+		SIZE
+	};
+
 	static constexpr unsigned int SideLength = 128;
 	IsingModel(double Temperature);
 	void Draw();
 	void Update();
 	double GetEnergy();
+	void ChangeAlgorithm();
 
 	void SwitchAutoCooling()
 	{
@@ -59,20 +68,38 @@ private:
 #elif __linux__
 	const std::string FontFile = "/usr/share/fonts/TTF/LiberationMono-Regular.ttf";
 #endif
-	const unsigned int FontSize = 22;
+	const unsigned int FontSize = 24;
 	const unsigned int NumDivision = 20;   // The variation of temperature
-	const unsigned int CoolingInterval = static_cast<int>(std::pow(IsingModel::SideLength, 1));
+	const unsigned int CoolingInterval = static_cast<int>(std::pow(IsingModel::SideLength, 0));
 
 	double initialTemperature = 0.e0;
 	bool isCooling = false;
 	unsigned long int numSteps = 0;
+	Algorithm algorithm = Algorithm::Metropolis;
 	double temperature;   // Include the Boltzmann constant: k_B T
 	std::array<std::array<Status, SideLength>, SideLength> cells;
 	std::unique_ptr<FTFont> font;
 	Status giveRandomState(double probability);
 
+	void giveInitialConfiguration();
 	int makeRandomCoordinate();
 	double getCouplingCoefficient(int iX, int iY, int jX, int jY);
+	double calcLocalMagneticField(const int X, const int Y);
+	void drawText(std::stringstream& ss, const int posX, const int posY);
+
+	std::string AlgorithmToStr(Algorithm algorithm)
+	{
+		switch (algorithm) {
+		case Algorithm::Metropolis:
+			return { "Metropolis method" };
+		case Algorithm::Glauber:
+			return { "Glauber dynamics" };
+		case Algorithm::PCA:
+			return { "SCA" };
+		case Algorithm::HillClimbing:
+			return { "Hill climbing" };
+		}
+	}
 
 	Status flip(Status state)
 	{
@@ -82,7 +109,7 @@ private:
 	double coolingSchedule(const int numTimes)
 	{
 		// Aarts, E.H.L. & Korst, J. (1989)
-		static const double a = 1.e0;   // > 1
+		static const double a = 2.e0;   // > 1
 		return (initialTemperature / (1.e0 + a * std::log(1 + numTimes)));
 
 		// Kirkpatrick, Gelatt and Vecchi (1983)
@@ -95,10 +122,6 @@ private:
 		//static const double a = 9.45;   // > 0
 		//return (initialTemperature / (1.e0 + a * numTimes));
 	}
-
-	void giveInitialConfiguration();
-	double calcLocalMagneticField(const int X, const int Y);
-	void drawText(std::stringstream& ss, const int posX, const int posY);
 };
 
 #endif // ! ISING_MODEL_H
