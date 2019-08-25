@@ -68,7 +68,7 @@ private:
 #elif __linux__
 	const std::string FontFile = "/usr/share/fonts/TTF/LiberationMono-Regular.ttf";
 #endif
-	const unsigned int FontSize = 24;
+	const unsigned int FontSize = 22;
 	const unsigned int NumDivision = 20;   // The variation of temperature
 	const unsigned int CoolingInterval = static_cast<int>(std::pow(IsingModel::SideLength, 0));
 
@@ -84,6 +84,7 @@ private:
 	void giveInitialConfiguration();
 	int makeRandomCoordinate();
 	double getCouplingCoefficient(int iX, int iY, int jX, int jY);
+	double calcLocalMagneticField(const std::array<std::array<Status, SideLength>, SideLength>& cells, const int X, const int Y);
 	double calcLocalMagneticField(const int X, const int Y);
 	void drawText(std::stringstream& ss, const int posX, const int posY);
 

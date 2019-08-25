@@ -121,11 +121,13 @@ void IsingModel::Update()
 	static auto ProbabilisticCellularAutomata = [this]() {
 		// アルゴリズム部分。
 		const double q = 1.e0 / temperature;
+		//const double V = std::pow(SideLength, 2);
+		//const double q = 0.5e0 * std::log(V) + V / temperature - 0.5e0 * std::log(1.e-4 * 0.25e0);  // 論文の下界。
 		const std::array<std::array<Status, SideLength>, SideLength> cells = this->cells;
 		auto updateOneSpinForRangeOf = [this, q, &cells](int begin, int end) {
 			for (int X = begin; X < end; X++) {
 				for (int Y = 0; Y < SideLength; Y++) {
-					if (giveRandomState(1.e0 / (1.e0 + std::exp(2.e0 * static_cast<int>(cells[Y][X]) * calcLocalMagneticField(X, Y) / temperature + 2.0e0 * q))) == Status::UpSpin)
+					if (giveRandomState(1.e0 / (1.e0 + std::exp(2.e0 * static_cast<int>(cells[Y][X]) * calcLocalMagneticField(cells, X, Y) / temperature + 2.0e0 * q))) == Status::UpSpin)
 						this->cells[Y][X] = flip(cells[Y][X]);
 				}
 			}
@@ -232,7 +234,7 @@ void IsingModel::giveInitialConfiguration()
 			cells[i][j] = (j < SideLength / 2) ? Status::UpSpin : Status::DownSpin;
 }
 
-double IsingModel::calcLocalMagneticField(const int X, const int Y)
+double IsingModel::calcLocalMagneticField(const std::array<std::array<Status, SideLength>, SideLength>& cells, const int X, const int Y)
 {
 	int neighbor[4][2] = {   // Periodic boundary condition
 			{Y, Modulo(X + 1, SideLength)},
@@ -244,6 +246,11 @@ double IsingModel::calcLocalMagneticField(const int X, const int Y)
 		localMagneticField += getCouplingCoefficient(X, Y, neighbor[i][1], neighbor[i][0])
 			* static_cast<int>(cells[neighbor[i][0]][neighbor[i][1]]);
 	return localMagneticField;
+}
+
+double IsingModel::calcLocalMagneticField(const int X, const int Y)
+{
+	return calcLocalMagneticField(this->cells, X, Y);
 }
 
 void IsingModel::drawText(std::stringstream& ss, const int posX, const int posY)
