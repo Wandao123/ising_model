@@ -124,7 +124,7 @@ void IsingModel::Update()
 	static auto ProbabilisticCellularAutomata = [this]() {
 		// アルゴリズム部分。
 		const double V = std::pow(SideLength, 2);
-		pinning = std::min(std::pow(1.e0 / temperature, 2.e0), 0.25e0 * std::log(V));
+		pinning = std::min(std::pow(std::log( 1.e0 + 1.e0 / temperature), 8.e0), 0.25e0 * std::log(V));
 		//pinning = 1.e-4;
 		// 論文の下界。
 		//const double pinning = 0.5e0 * std::log(V) + V / temperature - 0.5e0 * std::log(1.e-4 * 0.25e0);
