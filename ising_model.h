@@ -6,6 +6,7 @@
 #include <sstream>
 #include <cmath>
 #include <GLFW/glfw3.h>
+#define FTGL_LIBRARY_STATIC
 #include <FTGL/ftgl.h>
 
 constexpr int ScreenWidth = 600;
@@ -76,7 +77,8 @@ private:
 	bool isCooling = false;
 	unsigned long int numSteps = 0;
 	Algorithm algorithm = Algorithm::Metropolis;
-	double temperature;   // Include the Boltzmann constant: k_B T
+	double temperature;      // Include the Boltzmann constant: k_B T
+	double pinning = 0.e0;   // An parameter for the PCA
 	std::array<std::array<Status, SideLength>, SideLength> cells;
 	std::unique_ptr<FTFont> font;
 	Status giveRandomState(double probability);

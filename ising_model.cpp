@@ -1,5 +1,6 @@
 #include "ising_model.h"
 #include <iostream>
+#include <iomanip>
 #include <random>
 #include <future>
 #include <limits>
@@ -65,9 +66,11 @@ void IsingModel::Draw()
 	font->FaceSize(FontSize);
 	text << "System size  = " << SideLength << " x " << SideLength << " = " << SideLength * SideLength;
 	drawText(text, font->LineHeight(), posY += font->LineHeight());
-	text << "Temperature  = " << GetTemperature();
+	text << "Temperature  = " << std::scientific << std::setprecision(5) << GetTemperature();
+	if (algorithm == Algorithm::PCA)
+		text << ", q = " << std::scientific << std::setprecision(5) << pinning;
 	drawText(text, font->LineHeight(), posY += font->LineHeight());
-	text << "Energy       = " << GetEnergy();
+	text << "Energy       = " << std::scientific << std::setprecision(5) << GetEnergy();
 	drawText(text, font->LineHeight(), posY += font->LineHeight());
 	text << "Auto cooling = " << (isCooling ? "ON" : "OFF");
 	drawText(text, font->LineHeight(), posY += font->LineHeight());
@@ -120,14 +123,20 @@ void IsingModel::Update()
 
 	static auto ProbabilisticCellularAutomata = [this]() {
 		// アルゴリズム部分。
-		const double q = 1.e0 / temperature;
-		//const double V = std::pow(SideLength, 2);
-		//const double q = 0.5e0 * std::log(V) + V / temperature - 0.5e0 * std::log(1.e-4 * 0.25e0);  // 論文の下界。
+		const double V = std::pow(SideLength, 2);
+		pinning = std::min(std::pow(1.e0 / temperature, 2.e0), 0.25e0 * std::log(V));
+		//pinning = 1.e-4;
+		// 論文の下界。
+		//const double pinning = 0.5e0 * std::log(V) + V / temperature - 0.5e0 * std::log(1.e-4 * 0.25e0);
+		// 独自解。
+		//const double eps = 1.e-2;
+		//const double phi = std::exp(4 * 1.e0 / temperature);
+		//const double pinning = 0.5e0 * (std::log(phi - std::pow(phi, eps - 1)) - std::log(std::pow(phi, eps) - 1.e0));
 		const std::array<std::array<Status, SideLength>, SideLength> cells = this->cells;
-		auto updateOneSpinForRangeOf = [this, q, &cells](int begin, int end) {
+		auto updateOneSpinForRangeOf = [this, &cells](int begin, int end) {
 			for (int X = begin; X < end; X++) {
 				for (int Y = 0; Y < SideLength; Y++) {
-					if (giveRandomState(1.e0 / (1.e0 + std::exp(2.e0 * static_cast<int>(cells[Y][X]) * calcLocalMagneticField(cells, X, Y) / temperature + 2.0e0 * q))) == Status::UpSpin)
+					if (giveRandomState(1.e0 / (1.e0 + std::exp(2.e0 * static_cast<int>(cells[Y][X]) * calcLocalMagneticField(cells, X, Y) / temperature + 2.0e0 * pinning))) == Status::UpSpin)
 						this->cells[Y][X] = flip(cells[Y][X]);
 				}
 			}
