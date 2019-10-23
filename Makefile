@@ -1,6 +1,6 @@
 CXX = g++
 CPPFLAGS += -Wall -Wextra `pkg-config --cflags glfw3 ftgl`
-CXXFLAGS += -std=c++14 -s -O2
+CXXFLAGS += -std=c++14 -s -Ofast
 LDFLAGS += -lm -pthread `pkg-config --static --libs glfw3 ftgl`
 
 TARGET = main
@@ -16,8 +16,7 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
-$(OBJS_DIR)/%.o: %.cpp
-	@[ -d $(OBJS_DIR) ]
+%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -o $@ -c -MMD -MP $< $(CPPFLAGS)
 
 .PHONY: clean

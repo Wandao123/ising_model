@@ -10,6 +10,15 @@ This program is a simulator for an Ising model.  The simulator supports the foll
 
 - GCC >= 5.5
 
+### Font
+
+This program use
+
+- Consola font for windows,
+- or Liberation Sans font for Linux.
+
+You need to replace a default path `const std::string FontFile = ...` to valid one in `ising_model.h` because the font path depends on your operating system.
+
 ### Liblaries
 
 - GLFW >= 3.0
@@ -31,6 +40,7 @@ This program is a simulator for an Ising model.  The simulator supports the foll
     $ apt install libglfw3-dev libftgl-dev
     ````
 1. Run `make clean all`.
+1. If "Not found *font*" error occurs, then please modify the parameter `const std::string FontFile = ...` to the valid path in `ising_model.h`.
 
 ## Licence
 
