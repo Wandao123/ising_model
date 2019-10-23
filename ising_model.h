@@ -29,7 +29,7 @@ public:
 		SIZE
 	};
 
-	static constexpr unsigned int SideLength = 128;
+	static const int SideLength = 128;
 	IsingModel(double Temperature);
 	void Draw();
 	void Update();
@@ -101,6 +101,8 @@ private:
 			return { "SCA" };
 		case Algorithm::HillClimbing:
 			return { "Hill climbing" };
+		default:
+			return {};
 		}
 	}
 

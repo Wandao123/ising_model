@@ -5,7 +5,7 @@
 IsingModel isingModel(20.e0);
 static bool IsUpdating = false;
 
-void idle(unsigned long int countedFrames)
+void idle()
 {
 	if (IsUpdating)
 		isingModel.Update();
@@ -20,7 +20,7 @@ void display(GLFWwindow* window)
 	//glFlush();
 }
 
-void mouseButton(GLFWwindow* window, int button, int action, int mods)
+void mouseButton(GLFWwindow*, int button, int action, int)
 {
 	if (action == GLFW_PRESS) {
 		switch (button) {
@@ -33,7 +33,7 @@ void mouseButton(GLFWwindow* window, int button, int action, int mods)
 	}
 }
 
-void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
+void keyboard(GLFWwindow* window, int key, int, int action, int)
 {
 	if (action == GLFW_RELEASE) {
 		switch (key) {
@@ -66,7 +66,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 	}
 }
 
-int main(int argc, char *argv[])
+int main()
 {
 	// Initialization
 	if (!glfwInit())
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 
 	// Event loop
 	unsigned long int frameCount = 0;
-	double previousTime = glfwGetTime();  unsigned long int previousFrame = 0;
+	//double previousTime = glfwGetTime();  unsigned long int previousFrame = 0;
 	while (!glfwWindowShouldClose(window)) {
 		++frameCount;
 
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 			previousFrame = frameCount;
 		}*/
 
-		idle(frameCount);
+		idle();
 		display(window);
 		glfwPollEvents();
 	}

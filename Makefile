@@ -1,7 +1,7 @@
 CXX = g++
-CPPFLAGS += -Wall -Wextra -I/usr/include/freetype2
+CPPFLAGS += -Wall -Wextra `pkg-config --cflags glfw3 ftgl`
 CXXFLAGS += -std=c++14 -s -O2
-LDFLAGS += -lm -lglfw -lGLU -lGL -lftgl -pthread
+LDFLAGS += -lm -pthread `pkg-config --static --libs glfw3 ftgl`
 
 TARGET = main
 SRCS = $(wildcard *.cpp)

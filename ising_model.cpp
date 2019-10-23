@@ -34,8 +34,8 @@ void IsingModel::Draw()
 	//glEnableClientState(GL_VERTEX_ARRAY);
 	glBegin(GL_QUADS);
 	double tick = static_cast<double>(ScreenWidth) / SideLength;
-	for (int i = 0; i < SideLength; i++) {
-		for (int j = 0; j < SideLength; j++) {
+	for (auto i = 0; i < SideLength; i++) {
+		for (auto j = 0; j < SideLength; j++) {
 			// Fills the box surrounded by (X1, Y1) and (X2, Y2)
 			double X1 = j * tick, Y1 = i * tick;
 			double X2 = (j + 1) * tick, Y2 = (i + 1) * tick;
@@ -134,8 +134,8 @@ void IsingModel::Update()
 		//const double pinning = 0.5e0 * (std::log(phi - std::pow(phi, eps - 1)) - std::log(std::pow(phi, eps) - 1.e0));
 		const std::array<std::array<Status, SideLength>, SideLength> cells = this->cells;
 		auto updateOneSpinForRangeOf = [this, &cells](int begin, int end) {
-			for (int X = begin; X < end; X++) {
-				for (int Y = 0; Y < SideLength; Y++) {
+			for (auto X = begin; X < end; X++) {
+				for (auto Y = 0; Y < SideLength; Y++) {
 					if (giveRandomState(1.e0 / (1.e0 + std::exp(2.e0 * static_cast<int>(cells[Y][X]) * calcLocalMagneticField(cells, X, Y) / temperature + 2.0e0 * pinning))) == Status::UpSpin)
 						this->cells[Y][X] = flip(cells[Y][X]);
 				}
@@ -143,7 +143,7 @@ void IsingModel::Update()
 		};
 
 		// 並列処理部分。
-		const unsigned int NumThreads = 32;
+		const int NumThreads = 32;
 		std::vector<std::future<void>> tasks;
 		tasks.reserve(NumThreads - 1);
 		for (auto i = 0; i < NumThreads - 1; i++) {
@@ -158,8 +158,8 @@ void IsingModel::Update()
 			//double nextEval = std::numeric_limits<double>::infinity();
 			double energyDifference = 0.e0;
 			std::array<std::array<Status, SideLength>, SideLength> nextConfiguration = currentConfiguration;
-			for (int X = 0; X < SideLength; X++) {
-				for (int Y = 0; Y < SideLength; Y++) {
+			for (auto X = 0; X < SideLength; X++) {
+				for (auto Y = 0; Y < SideLength; Y++) {
 					double beforeEnergy = -1.e0 * static_cast<int>(currentConfiguration[Y][X]) * calcLocalMagneticField(X, Y);
 					double afterEnergy = -1.e0 * static_cast<int>(flip(currentConfiguration[Y][X])) * calcLocalMagneticField(X, Y);
 					if (energyDifference > afterEnergy - beforeEnergy) {
@@ -188,6 +188,8 @@ void IsingModel::Update()
 	case Algorithm::HillClimbing:
 		HillClimbing();
 		break;
+	default:
+		break;
 	}
 	if (isCooling) {
 		if (numSteps % CoolingInterval == 0)
@@ -199,8 +201,8 @@ void IsingModel::Update()
 double IsingModel::GetEnergy()
 {
 	double Result = 0.e0;
-	for (int X = 0; X < SideLength; X++) {
-		for (int Y = 0; Y < SideLength; Y++) {
+	for (auto X = 0; X < SideLength; X++) {
+		for (auto Y = 0; Y < SideLength; Y++) {
 			Result += -1.e0 * static_cast<int>(cells[Y][X]) * calcLocalMagneticField(X, Y);
 		}
 	}
@@ -228,7 +230,7 @@ int IsingModel::makeRandomCoordinate()
 	return Coordinate(mt);
 }
 
-double IsingModel::getCouplingCoefficient(int iX, int iY, int jX, int jY)   // Nearest neighbor ferromagnet
+double IsingModel::getCouplingCoefficient(int, int, int, int)   // Nearest neighbor ferromagnet
 {
 	//int distance = std::abs(iX - jX) + std::abs(iY - jY);
 	//return (distance == 1 ? +1.e0 : 0.e0);
@@ -238,8 +240,8 @@ double IsingModel::getCouplingCoefficient(int iX, int iY, int jX, int jY)   // N
 
 void IsingModel::giveInitialConfiguration()
 {
-	for (int i = 0; i < SideLength; i++)
-		for (int j = 0; j < SideLength; j++)
+	for (auto i = 0; i < SideLength; i++)
+		for (auto j = 0; j < SideLength; j++)
 			cells[i][j] = (j < SideLength / 2) ? Status::UpSpin : Status::DownSpin;
 }
 
