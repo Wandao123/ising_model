@@ -247,6 +247,31 @@ void IsingModel::giveInitialConfiguration()
 
 double IsingModel::calcLocalMagneticField(const std::array<std::array<Status, SideLength>, SideLength>& cells, const int X, const int Y)
 {
+	/*static auto magneticField = []() -> std::array<std::array<double, SideLength>, SideLength>& {
+		std::random_device rand;
+		std::mt19937 mt(rand());
+		std::uniform_real_distribution<double> unif(0.e0, 1.e0);
+		std::array<std::array<double, SideLength>, SideLength> result;
+		for (auto i = 0; i < SideLength; i++) {
+			for (auto j = 0; j < SideLength; j++) {
+				double sum = 0.0;
+				for (auto i = 1; i <= 6; i++)
+					sum += unif(mt);
+				result[i][j] = (sum - 0.5e0 * 6) / std::sqrt(6);
+			}
+		}
+		return result;
+	}();*/
+	static std::random_device rand;
+	static std::mt19937 mt(rand());
+	static std::uniform_real_distribution<double> unif(0.e0, 1.e0);
+	auto magneticField = []() -> double {
+		double sum = 0.0;
+		for (auto i = 1; i <= 6; i++)
+			sum += unif(mt);
+		return (sum - 0.5e0 * 6) / std::sqrt(6.0e0 / 3.0);
+	}();
+
 	int neighbor[4][2] = {   // Periodic boundary condition
 			{Y, Modulo(X + 1, SideLength)},
 			{Y, Modulo(X - 1, SideLength)},
@@ -256,7 +281,7 @@ double IsingModel::calcLocalMagneticField(const std::array<std::array<Status, Si
 	for (int i = 0; i < 4; i++)
 		localMagneticField += getCouplingCoefficient(X, Y, neighbor[i][1], neighbor[i][0])
 			* static_cast<int>(cells[neighbor[i][0]][neighbor[i][1]]);
-	return localMagneticField;
+	return localMagneticField + magneticField;
 }
 
 double IsingModel::calcLocalMagneticField(const int X, const int Y)
