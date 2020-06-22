@@ -344,3 +344,4 @@ main
 *.o
 *.d
 /python/env/
+*.dat

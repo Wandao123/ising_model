@@ -8,6 +8,7 @@ from enum import Enum
 import functools
 import math
 import multiprocessing as mp
+from numba import jit, jitclass, types, typed, typeof, deferred_type
 #import numpy as np
 import os
 import random
@@ -24,13 +25,22 @@ class NodeType(Enum):
 
 NodeName = TypeVar('NodeName', int, str)
 
-# 並列化の都合上、外部関数として定義する。
-def UpdateOneSpinForSCA(node: NodeName, spins: Dict[NodeName, int], isingModel) -> Tuple[NodeName, int]:
-    if random.random() <= 1.e0 / (1.e0 + math.exp((spins[node] * isingModel.CalcLocalMagneticField(node, spins) + isingModel.PinningParameter) / isingModel.Temperature)):
-        return (node, -spins[node])
-    else:
-        return (node, spins[node])
+nodename_type = deferred_type()
+nodename_type.define(NodeName.class_type.instance_type)
+kv_ty_int = (NodeName, types.int8)
+#kv_ty_float = (NodeName, types.float64)
+#kv_ty_dict = (NodeName, types.DictType(*kv_ty_float))
+spec = [
+    ('__temperature', types.float64),
+    ('__pinningParameter', types.float64),
+    ('__spins', types.DictType(*kv_ty_int)),
+    #('__externalMagneticFields', types.DictType(*kv_ty_float)),
+    #('__couplingCoefficients', types.DictType(*kv_ty_dict)),
+    ('__spins', types.DictType(*(typeof(NodeName), types.float64))),
+    ('MarkovChain', MCMCMethods)
+]
 
+@jitclass(spec)
 class IsingModel:
     """description of class"""
     def __init__(self, linear: Dict[NodeName, float], quadratic: Dict[Tuple[NodeName, NodeName], float]):
@@ -120,7 +130,7 @@ class IsingModel:
                 self.__spins[updatedNode] = -self.__spins[updatedNode]
             elif random.random() <= (math.exp(-energyDifference / self.__temperature) if self.__temperature != 0.e0 else 0.e0):
                 self.__spins[updatedNode] = -self.__spins[updatedNode]
-            
+
         def glauberDynamics():
             updatedNode: NodeName = random.choice(list(self.__spins.keys()))  # 一旦、リストに変換するため遅い？
             if random.random() <= 1.e0 / (1.e0 + math.exp(-2.e0 * self.CalcLocalMagneticField(updatedNode) / self.__temperature)):
@@ -147,3 +157,11 @@ class IsingModel:
             -self.__spins[node] * self.CalcLocalMagneticField(node)
             for node in self.__spins.keys()
         ])
+
+# 並列化の都合上、外部関数として定義する。
+#@jit(parallel=True)
+def UpdateOneSpinForSCA(node: NodeName, spins: Dict[NodeName, int], isingModel: IsingModel) -> Tuple[NodeName, int]:
+    if random.random() <= 1.e0 / (1.e0 + math.exp((spins[node] * isingModel.CalcLocalMagneticField(node, spins) + isingModel.PinningParameter) / isingModel.Temperature)):
+        return (node, -spins[node])
+    else:
+        return (node, spins[node])
