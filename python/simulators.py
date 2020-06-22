@@ -6,6 +6,7 @@ __date__ = '2020/6/21'
 import collections
 from enum import Enum
 import functools
+import math
 import multiprocessing as mp
 import numpy as np
 import os
@@ -25,13 +26,10 @@ NodeName = TypeVar('NodeName', int, str)
 
 # 並列化の都合上、外部関数として定義する。
 def UpdateOneSpinForSCA(node: NodeName, spins: Dict[NodeName, int], isingModel) -> Tuple[NodeName, int]:
-    if random.random() <= 1.e0 / (1.e0 + np.exp((spins[node] * isingModel.CalcLocalMagneticField(node, spins) + isingModel.PinningParameter)) * 2.e0 / isingModel.Temperature):
+    if random.random() <= 1.e0 / (1.e0 + np.exp((spins[node] * isingModel.CalcLocalMagneticField(node, spins) + isingModel.PinningParameter) / isingModel.Temperature)):
         return (node, -spins[node])
     else:
         return (node, spins[node])
-
-def foo(kv):
-    return kv
 
 class IsingModel:
     """description of class"""
@@ -66,17 +64,7 @@ class IsingModel:
                         self.__couplingCoefficients[row][column] = quadratic[(column, row)]
                     else:
                         self.__couplingCoefficients[row][column] = 0
-        # 対称かつ対角成分が0であることの確認。重複しているので非効率。
-        #for row in self.__spins.keys():
-        #    for column in self.__spins.keys():
-        #        if row == column:
-        #            if self.__couplingCoefficients[row][column] == 0:
-        #                continue
-        #        else:
-        #            if self.__couplingCoefficients[row][column] == self.__couplingCoefficients[column][row]:
-        #                continue
-        #        raise ValueError('"quadratic" must be symmetric and has 0 diagonal components.')
-        self.__markovChain: MCMCMethods = MCMCMethods.Metropolis
+        self.MarkovChain: MCMCMethods = MCMCMethods.Metropolis
 
     def CalcLocalMagneticField(self, node: NodeName, spins: Dict[NodeName, int] = None) -> float:
         if not spins:
@@ -114,21 +102,15 @@ class IsingModel:
     def PinningParameter(self, pinningParameter: float):
         self.__pinningParameter = max(pinningParameter, 0.e0)  # 強制的に非負実数にする。
 
-    @property
-    def MarkovChain(self) -> MCMCMethods:
-        return self.__markovChain
-
-    @MarkovChain.setter
-    def MarkovChain(self, markovChain: MCMCMethods):
-        self.__markovChain = markovChain
-
     def Print(self):
         os.system('cls' if os.name == 'nt' else 'clear')
-        maxColumns = np.ceil(np.sqrt(len(self.__spins)))
+        maxColumns = math.ceil(np.sqrt(len(self.__spins)))
         for index, spin in enumerate(self.__spins.values(), 1):
             print(0 if spin == -1 else 1, end='')
             if index % maxColumns == 0 or index == len(self.__spins):
                 print()
+            else:
+                print(' ', end='')
 
     def Update(self):
         def metropolisMethod():
@@ -147,20 +129,15 @@ class IsingModel:
                 self.__spins[updatedNode] = -1
 
         def sca():
-            #def updateOneSpin(pair: Tuple[NodeName, int]) -> Tuple[NodeName, int]:
-            #    if random.random() <= 1.e0 / (1.e0 + np.exp((pair[1] * self.CalcLocalMagneticField(pair[0]) + self.__pinningParameter)) * 2.e0 / self.__temperature):
-            #        return (pair[0], -pair[1])
-            #    else:
-            #        return (pair[0], pair[1])
             spins = self.__spins
-            with mp.Pool(processes=1) as pool:
+            with mp.Pool(processes=16) as pool:
                 self.__spins = dict(pool.map(functools.partial(UpdateOneSpinForSCA, spins=spins, isingModel=self), spins.keys()))
 
-        if self.__markovChain == MCMCMethods.Metropolis:
+        if self.MarkovChain == MCMCMethods.Metropolis:
             metropolisMethod()
-        elif self.__markovChain == MCMCMethods.Glauber:
+        elif self.MarkovChain == MCMCMethods.Glauber:
             glauberDynamics()
-        elif self.__markovChain == MCMCMethods.SCA:
+        elif self.MarkovChain == MCMCMethods.SCA:
             sca()
         else:
             raise ValueError('Illeagal choises')
