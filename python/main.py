@@ -15,12 +15,10 @@ from simulators import IsingModel, MCMCMethods
 if __name__ == '__main__':
     maxNodes = 64
     sideLength = math.ceil(math.sqrt(maxNodes))
-    #couplings = []
-    #for i in range(maxNodes):
-    #    for j in {i - 1 if i % sideLength != 0 else i - 1 + sideLength, i + 1 if i % sideLength != sideLength - 1 else i + 1 - sideLength, i - sideLength if i >= sideLength else i + maxNodes - sideLength, i + sideLength if i < maxNodes - sideLength else i - maxNodes + sideLength}:
-    #        couplings.append((i, j))
-    #isingModel = IsingModel({}, {pair: 1 for pair in couplings})
-    isingModel = IsingModel({}, {(i, j): -1 if random.random() <= 0.5e0 else 0 for i in range(maxNodes) for j in range(i + 1, maxNodes)})
+    # Erdo"s-Re'nyi random graph.
+    #isingModel = IsingModel({}, {(i, j): -1 if random.random() <= 0.5e0 else 0 for i in range(maxNodes) for j in range(i + 1, maxNodes)})
+    # Spin glass.
+    isingModel = IsingModel({}, {(i, j): -1 if random.random() <= 0.5e0 else 1 for i in range(maxNodes) for j in range(i + 1, maxNodes)})
     isingModel.PinningParameter = math.sqrt(maxNodes) * 0.5e0
     initialTemperature = sum([abs(isingModel.CalcLocalMagneticField(node)) + isingModel.PinningParameter for node in isingModel.Spins.keys()])
     isingModel.Temperature = 200.e0
@@ -34,6 +32,7 @@ if __name__ == '__main__':
         if i % 20 == 0:
             print('Complete {0} times.  Energy={1}, Temperature={2}.'.format(i, output[i][1], output[i][2]))
     with open('output.dat', mode='w') as file:
+        file.write('# date: ' + datetime.datetime.now().isoformat() + '.\n')
         for data in output:
             file.write('{0:<4d} {1:<14.5e} {2:<14.7e}\n'.format(data[0], data[1], data[2]))
 
@@ -41,12 +40,12 @@ if __name__ == '__main__':
         isingModel.Update()
         isingModel.Temperature = initialTemperature / math.log(i + 1)
         if i % 10 == 0:
-            isingModel.Print()
+            #isingModel.Print()
             print(dict(sorted(isingModel.Spins.items(), key=lambda x: x[0])))
-            print('Temperature={0:6.2f}, Energy={1:6.2f}'.format(isingModel.Temperature, isingModel.GetEnergy()))"""
+            print('Temperature={0:6.2f}, Energy={1:6.2f}'.format(isingModel.Temperature, isingModel.GetEnergy()))
 
-    #for i in range(maxNodes):
-    #    for j in range(maxNodes):
-    #        print('{0:2d}'.format(isingModel.CouplingCoefficients[i][j]), end='')
-    #    print()
-    #print(isingModel.ExternalMagneticField)
+    for i in range(maxNodes):
+        for j in range(maxNodes):
+            print('{0:2d}'.format(isingModel.CouplingCoefficients[i][j]), end='')
+        print()
+    print(isingModel.ExternalMagneticField)"""
