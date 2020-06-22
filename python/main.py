@@ -23,20 +23,20 @@ if __name__ == '__main__':
     isingModel = IsingModel({}, {(i, j): -1 if random.random() <= 0.5e0 else 0 for i in range(maxNodes) for j in range(i + 1, maxNodes)})
     isingModel.PinningParameter = math.sqrt(maxNodes) * 0.5e0
     initialTemperature = sum([abs(isingModel.CalcLocalMagneticField(node)) + isingModel.PinningParameter for node in isingModel.Spins.keys()])
-    isingModel.Temperature = initialTemperature
+    isingModel.Temperature = 200.e0
     isingModel.MarkovChain = MCMCMethods.SCA
 
     output = []
     for i in range(2000):
         isingModel.Update()
         output.append([i, isingModel.GetEnergy(), isingModel.Temperature])
-        isingModel.Temperature = initialTemperature * 0.9e0 ** i
+        isingModel.Temperature = 200.e0 - 0.1e0 * i
         if i % 20 == 0:
-            print('Complete {0} times.'.format(i))
+            print('Complete {0} times.  Energy={1}, Temperature={2}.'.format(i, output[i][1], output[i][2]))
     with open('output.dat', mode='w') as file:
         for data in output:
             file.write('{0:<4d} {1:<14.5e} {2:<14.7e}\n'.format(data[0], data[1], data[2]))
-    
+
     """for i in range(1, 11):
         isingModel.Update()
         isingModel.Temperature = initialTemperature / math.log(i + 1)
