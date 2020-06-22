@@ -7,22 +7,35 @@ __date__ = '2020/6/21'
 import datetime
 import math
 #import matplotlib.pyplot as plt
-#import numpy as np
+import numpy as np
 import random
+from typing import Dict, Tuple
 
 from simulators import IsingModel, MCMCMethods
 
+# Erdo"s-Re'nyi random graph.
+def generateErdosRenyiEdges(maxNodes: int) -> Dict[Tuple[int, int], float]:
+    return {(i, j): -1 if random.random() <= 0.5e0 else 0 for i in range(maxNodes) for j in range(i + 1, maxNodes)}
+
+# Spin glass.
+def generateSpinGlassEdges(maxNodes: int) -> Dict[Tuple[int, int], float]:
+    return {(i, j): -1 if random.random() <= 0.5e0 else 1 for i in range(maxNodes) for j in range(i + 1, maxNodes)}
+
+def printParameters(isingModel: IsingModel):
+    print(dict(sorted(isingModel.Spins.items(), key=lambda x: x[0])))
+    for i in range(maxNodes):
+        for j in range(maxNodes):
+            print('{0:2.0f}'.format(isingModel.CouplingCoefficients[i][j]), end='')
+        print()
+    print(isingModel.ExternalMagneticField)
+
 if __name__ == '__main__':
-    maxNodes = 64
-    sideLength = math.ceil(math.sqrt(maxNodes))
-    # Erdo"s-Re'nyi random graph.
-    #isingModel = IsingModel({}, {(i, j): -1 if random.random() <= 0.5e0 else 0 for i in range(maxNodes) for j in range(i + 1, maxNodes)})
-    # Spin glass.
-    isingModel = IsingModel({}, {(i, j): -1 if random.random() <= 0.5e0 else 1 for i in range(maxNodes) for j in range(i + 1, maxNodes)})
+    maxNodes = 1024
+    isingModel = IsingModel({}, generateErdosRenyiEdges(maxNodes))
     isingModel.PinningParameter = math.sqrt(maxNodes) * 0.5e0
-    initialTemperature = sum([abs(isingModel.CalcLocalMagneticField(node)) + isingModel.PinningParameter for node in isingModel.Spins.keys()])
+    initialTemperature = np.sum([np.abs(isingModel.CalcLocalMagneticField(isingModel.NodeIndices[node])) + isingModel.PinningParameter for node in isingModel.Spins.keys()])
     isingModel.Temperature = 200.e0
-    isingModel.MarkovChain = MCMCMethods.SCA
+    #isingModel.MarkovChain = MCMCMethods.SCA
 
     output = []
     for i in range(2000):
@@ -35,17 +48,3 @@ if __name__ == '__main__':
         file.write('# date: ' + datetime.datetime.now().isoformat() + '.\n')
         for data in output:
             file.write('{0:<4d} {1:<14.5e} {2:<14.7e}\n'.format(data[0], data[1], data[2]))
-
-    """for i in range(1, 11):
-        isingModel.Update()
-        isingModel.Temperature = initialTemperature / math.log(i + 1)
-        if i % 10 == 0:
-            #isingModel.Print()
-            print(dict(sorted(isingModel.Spins.items(), key=lambda x: x[0])))
-            print('Temperature={0:6.2f}, Energy={1:6.2f}'.format(isingModel.Temperature, isingModel.GetEnergy()))
-
-    for i in range(maxNodes):
-        for j in range(maxNodes):
-            print('{0:2d}'.format(isingModel.CouplingCoefficients[i][j]), end='')
-        print()
-    print(isingModel.ExternalMagneticField)"""
