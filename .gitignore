@@ -343,3 +343,4 @@ healthchecksdb
 main
 *.o
 *.d
+/python/env/

@@ -34,6 +34,7 @@
     <ProjectGuid>{16400230-5370-48E2-82F9-F39A07B4C21D}</ProjectGuid>
     <RootNamespace>isingmodel</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>cpp</ProjectName>
     <!--<VcpkgTriplet Condition="'$(Platform)'=='Win32'">x86-windows-static</VcpkgTriplet>
     <VcpkgTriplet Condition="'$(Platform)'=='x64'">x64-windows-static</VcpkgTriplet>-->
   </PropertyGroup>
