@@ -8,7 +8,7 @@ from enum import Enum
 import functools
 import math
 import multiprocessing as mp
-import numpy as np
+#import numpy as np
 import os
 import random
 from typing import Dict, Tuple, TypeVar
@@ -26,7 +26,7 @@ NodeName = TypeVar('NodeName', int, str)
 
 # 並列化の都合上、外部関数として定義する。
 def UpdateOneSpinForSCA(node: NodeName, spins: Dict[NodeName, int], isingModel) -> Tuple[NodeName, int]:
-    if random.random() <= 1.e0 / (1.e0 + np.exp((spins[node] * isingModel.CalcLocalMagneticField(node, spins) + isingModel.PinningParameter) / isingModel.Temperature)):
+    if random.random() <= 1.e0 / (1.e0 + math.exp((spins[node] * isingModel.CalcLocalMagneticField(node, spins) + isingModel.PinningParameter) / isingModel.Temperature)):
         return (node, -spins[node])
     else:
         return (node, spins[node])
@@ -69,10 +69,10 @@ class IsingModel:
     def CalcLocalMagneticField(self, node: NodeName, spins: Dict[NodeName, int] = None) -> float:
         if not spins:
             spins = self.__spins
-        return self.__externalMagneticFields[node] + np.sum(np.array([
+        return self.__externalMagneticFields[node] + sum([
             self.__couplingCoefficients[node][neighbor]
             for neighbor in spins.keys()
-        ], dtype=np.float))
+        ])
 
     @property
     def Spins(self) -> Dict[NodeName, int]:
@@ -104,7 +104,7 @@ class IsingModel:
 
     def Print(self):
         os.system('cls' if os.name == 'nt' else 'clear')
-        maxColumns = math.ceil(np.sqrt(len(self.__spins)))
+        maxColumns = math.ceil(math.sqrt(len(self.__spins)))
         for index, spin in enumerate(self.__spins.values(), 1):
             print(0 if spin == -1 else 1, end='')
             if index % maxColumns == 0 or index == len(self.__spins):
@@ -118,12 +118,12 @@ class IsingModel:
             energyDifference: float = 2.e0 * self.__spins[updatedNode] * self.CalcLocalMagneticField(updatedNode)
             if energyDifference < 0.e0:
                 self.__spins[updatedNode] = -self.__spins[updatedNode]
-            elif random.random() <= (np.exp(-energyDifference / self.__temperature) if self.__temperature != 0.e0 else 0.e0):
+            elif random.random() <= (math.exp(-energyDifference / self.__temperature) if self.__temperature != 0.e0 else 0.e0):
                 self.__spins[updatedNode] = -self.__spins[updatedNode]
             
         def glauberDynamics():
             updatedNode: NodeName = random.choice(list(self.__spins.keys()))  # 一旦、リストに変換するため遅い？
-            if random.random() <= 1.e0 / (1.e0 + np.exp(-2.e0 * self.CalcLocalMagneticField(updatedNode) / self.__temperature)):
+            if random.random() <= 1.e0 / (1.e0 + math.exp(-2.e0 * self.CalcLocalMagneticField(updatedNode) / self.__temperature)):
                 self.__spins[updatedNode] = +1
             else:
                 self.__spins[updatedNode] = -1
@@ -143,7 +143,7 @@ class IsingModel:
             raise ValueError('Illeagal choises')
 
     def GetEnergy(self):
-        return 0.5e0 * np.sum(np.array([  # Remove double-counting duplicates by multiplying the sum by 1/2.
+        return 0.5e0 * sum([  # Remove double-counting duplicates by multiplying the sum by 1/2.
             -self.__spins[node] * self.CalcLocalMagneticField(node)
             for node in self.__spins.keys()
-        ], dtype=np.float))
+        ])
