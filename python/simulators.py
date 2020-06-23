@@ -141,11 +141,11 @@ class IsingModel:
                 #    processesList.append(process)
                 #self.__spins = np.concatenate([queue.get() for i in range(NumProcesses)])
             else:
-                #self.__spins = np.array(list(map(functools.partial(_updateOneSpinForSCA, spins=spins, isingModel=self), self.__nodeIndices.values())))
                 self.__spins = np.array([
                     _updateOneSpinForSCA(nodeIndex, spins, self)
                     for nodeIndex in self.__nodeIndices.values()
                 ], dtype=np.int)
+                #self.__spins = np.array(list(map(functools.partial(_updateOneSpinForSCA, spins=spins, isingModel=self), self.__nodeIndices.values())))
                 #self.__spins = np.frompyfunc(functools.partial(_updateOneSpinForSCA, spins=spins, isingModel=self), 1, 1)(np.array(list(self.__nodeIndices.values()), dtype=np.int))
                 #self.__updateOneSpin = np.vectorize(_updateOneSpinForSCA)
                 #self.__spins = self.__updateOneSpin(np.array(list(self.__nodeIndices.values()), dtype=np.int), np.full(len(self.__nodeIndices), spins), np.full(len(self.__nodeIndices), self))

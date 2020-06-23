@@ -113,9 +113,11 @@ private:
 
 	double coolingSchedule(const int numTimes)
 	{
+		return (initialTemperature / (numTimes > 1 ? std::log(1 + numTimes) : 1.e0));
+
 		// Aarts, E.H.L. & Korst, J. (1989)
-		static const double a = 2.e0;   // > 1
-		return (initialTemperature / (1.e0 + a * std::log(1 + numTimes)));
+		//static const double a = 2.e0;   // > 1
+		//return (initialTemperature / (1.e0 + a * std::log(1 + numTimes)));
 
 		// Kirkpatrick, Gelatt and Vecchi (1983)
 		//static const double a = 0.95e0;   // 0.8 <= a <= 0.9
