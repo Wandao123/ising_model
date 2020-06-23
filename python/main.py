@@ -36,9 +36,10 @@ if __name__ == '__main__':
     initialTemperature = np.sum([np.abs(isingModel.CalcLocalMagneticField(isingModel.NodeIndices[node])) + isingModel.PinningParameter for node in isingModel.Spins.keys()])
     isingModel.Temperature = 200.e0
     isingModel.MarkovChain = MCMCMethods.SCA
+    #isingModel.Parallelizing = True
 
     output = []
-    for i in range(2000):
+    for i in range(2001):
         isingModel.Update()
         output.append([i, isingModel.GetEnergy(), isingModel.Temperature])
         isingModel.Temperature = 200.e0 - 0.1e0 * i
