@@ -35,7 +35,7 @@ if __name__ == '__main__':
     isingModel.PinningParameter = math.sqrt(maxNodes) * 0.5e0
     initialTemperature = np.sum([np.abs(isingModel.CalcLocalMagneticField(isingModel.NodeIndices[node])) + isingModel.PinningParameter for node in isingModel.Spins.keys()])
     isingModel.Temperature = 200.e0
-    #isingModel.MarkovChain = MCMCMethods.SCA
+    isingModel.MarkovChain = MCMCMethods.SCA
 
     output = []
     for i in range(2000):

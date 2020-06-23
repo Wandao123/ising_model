@@ -25,20 +25,20 @@ class NodeType(Enum):
 NodeName = TypeVar('NodeName', int, str)
 
 class IsingModel:
-    """description of class"""
+    """Ising model simulator"""
     def __init__(self, linear: Dict[NodeName, float], quadratic: Dict[Tuple[NodeName, NodeName], float]):
-        self.__temperature: float = 0
-        self.__pinningParameter: float = 0
+        self.__temperature: float = 0  # 温度パラメータ。
+        self.__pinningParameter: float = 0  # SCAのpinning parameter.
         self.__nodeIndices: Dict[NodeName, int] = {  # 頂点の名前と__spinsの添字との対応。
             node: index
             for index, node in enumerate({n for pair in quadratic.keys() for n in pair}.union(linear.keys()))
         }
         self.__spins: List[int] = np.ones(len(self.__nodeIndices), dtype=np.int8)
-        self.__externalMagneticFields: List[float] = np.array([
+        self.__externalMagneticFields: List[float] = np.array([  # 外部磁場の強さ。
             linear[node] if node in linear else 0
             for node in self.__nodeIndices
         ], dtype=np.float)
-        self.__couplingCoefficients: List[List[float]] = np.empty((len(self.__nodeIndices),)*2, dtype=np.float)
+        self.__couplingCoefficients: List[List[float]] = np.empty((len(self.__nodeIndices),)*2, dtype=np.float)  # スピン同士の結合定数。
         for row, i in self.__nodeIndices.items():
             for column, j in self.__nodeIndices.items():
                 if i == j:  # 対角成分は強制的に0にする。
@@ -50,7 +50,8 @@ class IsingModel:
                         self.__couplingCoefficients[i][j] = quadratic[(column, row)]
                     else:
                         self.__couplingCoefficients[i][j] = 0
-        self.MarkovChain: MCMCMethods = MCMCMethods.Metropolis
+        self.MarkovChain: MCMCMethods = MCMCMethods.Metropolis  # Markov連鎖において使用する更新アルゴリズム。
+        self.Parallelizing: bool = False  # SCAで並列化をするか否かのフラグ。
 
     def CalcLocalMagneticField(self, nodeIndex: int, spins: List[int] = np.zeros((0, 0), dtype=np.int)) -> float:
         if spins.size == 0:
@@ -122,10 +123,25 @@ class IsingModel:
                 self.__spins[updatedNode] = -1
 
         def sca():
+            NumProcesses = 8
             spins = self.__spins
-            with mp.Pool(processes=8) as pool:
-               self.__spins = np.array(pool.map(functools.partial(UpdateOneSpinForSCA, spins=spins, isingModel=self), self.__nodeIndices.keys()))
-            #self.__spins = np.array(list(map(functools.partial(UpdateOneSpinForSCA, spins=spins, isingModel=self), self.__nodeIndices.keys())))
+
+            if self.Parallelizing:
+                # multiprocessing.Poolを使う方法。
+                with mp.Pool(processes=NumProcesses) as pool:
+                   self.__spins = np.array(pool.map(functools.partial(_updateOneSpinForSCA, spins=spins, isingModel=self), self.__nodeIndices.keys()))
+                
+                # multiprocessing.Processesを使う方法。
+                #queue = mp.Queue()
+                #splitNodeIndicesArray = np.array_split(list(self.__nodeIndices.values()), NumProcesses)  # 各プロセスへパラメータの組を適当に振り分ける。
+                #processesList = []
+                #for i in range(NumProcesses):
+                #    process = mp.Process(target=_updateOneSpinForSCA, args=(queue, splitNodeIndicesArray[i], spins, self))
+                #    process.start()
+                #    processesList.append(process)
+                #self.__spins = np.concatenate([queue.get() for i in range(NumProcesses)])
+            else:
+                self.__spins = np.array(list(map(functools.partial(_updateOneSpinForSCA, spins=spins, isingModel=self), self.__nodeIndices.keys())))
 
         if self.MarkovChain == MCMCMethods.Metropolis:
             metropolisMethod()
@@ -141,8 +157,18 @@ class IsingModel:
         return 0.5e0 * np.matmul(-self.__spins, np.matmul(self.__couplingCoefficients, self.__spins) + self.__externalMagneticFields)
 
 # 並列化の都合上、外部関数として定義する。
-def UpdateOneSpinForSCA(nodeIndex: int, spins: List[int], isingModel: IsingModel) -> int:
+def _updateOneSpinForSCA(nodeIndex: int, spins: List[int], isingModel: IsingModel) -> int:
     if random.random() <= 1.e0 / (1.e0 + np.exp((spins[nodeIndex] * isingModel.CalcLocalMagneticField(nodeIndex, spins) + isingModel.PinningParameter) / isingModel.Temperature)):
         return -spins[nodeIndex]
     else:
         return spins[nodeIndex]
+
+#def _updateOneSpinForSCA(queue: mp.Queue, nodeIndicesArray: List[int], spins: List[int], isingModel: IsingModel) -> List[int]:
+#    result = np.empty(nodeIndicesArray.size, dtype=np.float)
+#    for i, nodeIndex in enumerate(nodeIndicesArray):
+#        if random.random() <= 1.e0 / (1.e0 + np.exp((spins[nodeIndex] * isingModel.CalcLocalMagneticField(nodeIndex, spins) + isingModel.PinningParameter) / isingModel.Temperature)):
+#            result[i] = -spins[nodeIndex]
+#        else:
+#            result[i] = spins[nodeIndex]
+#    queue.put(result)
+#    return result
