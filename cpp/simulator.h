@@ -91,6 +91,11 @@ public:
 		}
 	}
 
+	Algorithm GetCurrentAlgorithm() const
+	{
+		return algorithm;
+	}
+
 	void ChangeAlgorithmTo(const Algorithm algorithm)
 	{
 		this->algorithm = algorithm;
