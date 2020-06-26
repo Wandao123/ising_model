@@ -123,20 +123,12 @@ void IsingModel::Update()
 
 	static auto ProbabilisticCellularAutomata = [this]() {
 		// アルゴリズム部分。
-		const double V = std::pow(SideLength, 2);
-		pinning = std::min(std::pow(std::log( 1.e0 + 1.e0 / temperature), 8.e0), 0.25e0 * std::log(V));
-		//pinning = 1.e-4;
-		// 論文の下界。
-		//const double pinning = 0.5e0 * std::log(V) + V / temperature - 0.5e0 * std::log(1.e-4 * 0.25e0);
-		// 独自解。
-		//const double eps = 1.e-2;
-		//const double phi = std::exp(4 * 1.e0 / temperature);
-		//const double pinning = 0.5e0 * (std::log(phi - std::pow(phi, eps - 1)) - std::log(std::pow(phi, eps) - 1.e0));
+		pinning = SideLength * 0.25e0;
 		const std::array<std::array<Status, SideLength>, SideLength> cells = this->cells;
 		auto updateOneSpinForRangeOf = [this, &cells](int begin, int end) {
 			for (auto X = begin; X < end; X++) {
 				for (auto Y = 0; Y < SideLength; Y++) {
-					if (giveRandomState(1.e0 / (1.e0 + std::exp(2.e0 * static_cast<int>(cells[Y][X]) * calcLocalMagneticField(cells, X, Y) / temperature + 2.0e0 * pinning))) == Status::UpSpin)
+					if (giveRandomState(1.e0 / (1.e0 + std::exp((static_cast<int>(cells[Y][X]) * calcLocalMagneticField(cells, X, Y) + pinning) / temperature))) == Status::UpSpin)
 						this->cells[Y][X] = flip(cells[Y][X]);
 				}
 			}

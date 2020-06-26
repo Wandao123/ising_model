@@ -161,7 +161,7 @@ class IsingModel:
 
     def GetEnergy(self):
         # Remove double-counting duplicates by multiplying the sum by 1/2.
-        return 0.5e0 * np.matmul(-self.__spins, np.matmul(self.__couplingCoefficients, self.__spins) + self.__externalMagneticFields)
+        return np.matmul(-self.__spins, 0.5e0 * np.matmul(self.__couplingCoefficients, self.__spins) + self.__externalMagneticFields)
 
 # 並列化の都合上、外部関数として定義する。
 def _updateOneSpinForSCA(nodeIndex: int, spins: List[int], isingModel: IsingModel) -> int:

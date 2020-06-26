@@ -1,7 +1,7 @@
 CXX = g++
-CPPFLAGS += -Wall -Wextra `pkg-config --cflags eigen3`
-CXXFLAGS += -std=c++17 -s -Ofast -mtune=native -march=native -mfpmath=both
-LDFLAGS += -lm -pthread `pkg-config --static --libs eigen3`
+CPPFLAGS += -Wall -Wextra `pkg-config --cflags glfw3 ftgl`
+CXXFLAGS += -std=c++14 -s -Ofast -mtune=native -march=native -mfpmath=both
+LDFLAGS += -lm -pthread `pkg-config --static --libs glfw3 ftgl`
 
 TARGET = main
 SRCS = $(wildcard *.cpp)
