@@ -5,14 +5,6 @@
 #include <limits>
 #include <set>
 
-/*IsingModel::IsingModel(const unsigned int maxNodes)
-	: externalMagneticField(Eigen::VectorXd::Zero(maxNodes))
-	, couplingCoefficients(Eigen::MatrixXd::Ones(maxNodes, maxNodes))
-{
-	spins.setConstant(maxNodes, Spin::Up);
-	couplingCoefficients -= Eigen::VectorXd::Ones(maxNodes).asDiagonal();
-}*/
-
 // quadraticのキーのペア (i, j) は順番が i < j となっていなければならない。
 IsingModel::IsingModel(const LinearBiases linear, const QuadraticBiases quadratic)
 {
@@ -37,26 +29,6 @@ IsingModel::IsingModel(const LinearBiases linear, const QuadraticBiases quadrati
 		else
 			externalMagneticField(i) = 0.e0;
 	}
-	/*couplingCoefficients.resize(maxNodes, maxNodes);
-	for (auto i = 0; i < maxNodes; i++) {
-		for (auto j = 0; j < maxNodes; j++) {
-			if (i == j) {
-				couplingCoefficients(i, j) = 0.e0;
-			} else {
-				auto iter = quadratic.find(std::make_pair(nodeLabels[i], nodeLabels[j]));
-				if (iter != quadratic.end())
-					couplingCoefficients(i, j) = iter->second;
-				else
-					couplingCoefficients(i, j) = 0.e0;
-			}
-		}
-	}
-	for (auto i = 0; i < maxNodes; i++) {
-		for (auto j = 0; j < maxNodes; j++) {
-			if (i != j && couplingCoefficients(i, j) == 0.e0)
-				couplingCoefficients(i, j) = couplingCoefficients(j, i);
-		}
-	}*/
 	couplingCoefficients = Eigen::MatrixXd::Zero(maxNodes, maxNodes);
 	for (auto i = 0; i < maxNodes; i++) {
 		for (auto j = i + 1; j < maxNodes; j++) {
@@ -79,6 +51,7 @@ void IsingModel::Print()
 	std::cout << externalMagneticField.transpose() << std::endl;
 	std::cout << "Coupling coefficinets:" << std::endl;
 	std::cout << couplingCoefficients << std::endl;
+	std::cout << "Algorithm: " << AlgorithmToStr(algorithm) << std::endl;
 }
 
 /* Hamiltonian: H(s) = - sum_<x,y> J_{xy} s_x s_y - sum_x h_x s_x */

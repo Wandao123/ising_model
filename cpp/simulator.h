@@ -71,10 +71,25 @@ public:
 		SIZE
 	};
 
-	//IsingModel(const unsigned int maxNodes);
 	IsingModel(const LinearBiases linear, const QuadraticBiases quadratic);
 	void Print();
 	void Update();
+
+	std::string AlgorithmToStr(Algorithm algorithm)
+	{
+		switch (algorithm) {
+		case Algorithm::Metropolis:
+			return { "Metropolis method" };
+		case Algorithm::Glauber:
+			return { "Glauber dynamics" };
+		case Algorithm::SCA:
+			return { "SCA" };
+		case Algorithm::HillClimbing:
+			return { "Hill climbing" };
+		default:
+			return {};
+		}
+	}
 
 	void ChangeAlgorithmTo(const Algorithm algorithm)
 	{
@@ -116,7 +131,6 @@ public:
 	}
 private:
 	using Configuration = Eigen::Matrix<Spin, Eigen::Dynamic, 1>;
-	//using Configuration = Eigen::VectorXi;
 
 	double temperature = 0.e0;        // Including the Boltzmann constant: k_B T.
 	double pinningParameter = 0.e0;   // An parameter for the PCA.
@@ -140,26 +154,6 @@ private:
 	Spin flip(Spin spin)
 	{
 		return (spin == Spin::Down) ? Spin::Up : Spin::Down;
-	}
-	/*int flip(int spin)
-	{
-		return -spin;
-	}*/
-
-	std::string AlgorithmToStr(Algorithm algorithm)
-	{
-		switch (algorithm) {
-		case Algorithm::Metropolis:
-			return { "Metropolis method" };
-		case Algorithm::Glauber:
-			return { "Glauber dynamics" };
-		case Algorithm::SCA:
-			return { "SCA" };
-		case Algorithm::HillClimbing:
-			return { "Hill climbing" };
-		default:
-			return {};
-		}
 	}
 };
 
