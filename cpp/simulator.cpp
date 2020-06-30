@@ -41,7 +41,7 @@ IsingModel::IsingModel(const LinearBiases linear, const QuadraticBiases quadrati
 	}
 }
 
-void IsingModel::Print()
+void IsingModel::Print() const
 {
 	std::cout << "Current spin configuration:" << std::endl;
 	for (auto i = 0; i < spins.size(); i++)

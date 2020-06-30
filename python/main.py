@@ -12,6 +12,7 @@ import random
 from typing import Dict, Tuple
 
 from simulators import IsingModel, MCMCMethods
+import simulatorWithCpp
 
 # Erdo"s-Re'nyi random graph.
 def generateErdosRenyiEdges(maxNodes: int) -> Dict[Tuple[int, int], float]:
@@ -31,19 +32,17 @@ def printParameters(isingModel: IsingModel):
 
 if __name__ == '__main__':
     maxNodes = 1024
-    isingModel = IsingModel({}, generateErdosRenyiEdges(maxNodes))
-    isingModel.PinningParameter = math.sqrt(maxNodes)
-    #initialTemperature = np.sum([np.abs(isingModel.CalcLocalMagneticField(isingModel.NodeIndices[node])) + isingModel.PinningParameter for node in isingModel.Spins.keys()])
-    isingModel.Temperature = 200.e0
-    isingModel.MarkovChain = MCMCMethods.SCA
-    #isingModel.Parallelizing = True
+    quadratic = generateErdosRenyiEdges(maxNodes)
+    isingModel = simulatorWithCpp.IsingModel({}, quadratic)
+    isingModel.PinningParameter = math.sqrt(maxNodes) / 2
+    initialTemperature = np.sum([np.abs(J) + isingModel.PinningParameter for J in quadratic.values()])
+    isingModel.Algorithm = simulatorWithCpp.Algorithm.SCA
 
     output = []
-    for i in range(2001):
-        #isingModel.Temperature = initialTemperature / (np.log(1 + i) + 1.e0)
-        isingModel.Temperature = 200.e0 - 0.1e0 * i
+    for i in range(int(1.e6 + 1)):
+        isingModel.Temperature = initialTemperature / (2 * np.log(1 + i) + 1.e0)
         isingModel.Update()
-        output.append([i, isingModel.GetEnergy(), isingModel.Temperature])
+        output.append([i, isingModel.Energy, isingModel.Temperature])
         if i % 20 == 0:
             print('Complete {0} times.  Energy={1}, Temperature={2}.'.format(i, output[i][1], output[i][2]))
     with open('output.dat', mode='w') as file:

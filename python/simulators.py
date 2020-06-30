@@ -25,7 +25,7 @@ class NodeType(Enum):
 NodeName = TypeVar('NodeName', int, str)
 
 class IsingModel:
-    """Ising model simulator"""
+    """An Ising model simulator"""
     def __init__(self, linear: Dict[NodeName, float], quadratic: Dict[Tuple[NodeName, NodeName], float]):
         self.__temperature: float = 0  # 温度パラメータ。
         self.__pinningParameter: float = 0  # SCAのpinning parameter.
@@ -34,7 +34,7 @@ class IsingModel:
             for index, node in enumerate({n for pair in quadratic.keys() for n in pair}.union(linear.keys()))
         }
         self.__spins: List[int] = np.ones(len(self.__nodeIndices), dtype=np.int8)
-        self.__externalMagneticFields: List[float] = np.array([  # 外部磁場の強さ。
+        self.__externalMagneticField: List[float] = np.array([  # 外部磁場の強さ。
             linear[node] if node in linear else 0
             for node in self.__nodeIndices
         ], dtype=np.float)
@@ -56,7 +56,7 @@ class IsingModel:
     def CalcLocalMagneticField(self, nodeIndex: int, spins: List[int] = np.zeros((0, 0), dtype=np.int)) -> float:
         if spins.size == 0:
             spins = self.__spins
-        return self.__externalMagneticFields[nodeIndex] + np.matmul(self.__couplingCoefficients, spins)[nodeIndex]
+        return self.__externalMagneticField[nodeIndex] + np.matmul(self.__couplingCoefficients, spins)[nodeIndex]
 
     @property
     def NodeIndices(self) -> Dict[NodeName, int]:
@@ -68,7 +68,7 @@ class IsingModel:
 
     @property
     def ExternalMagneticField(self) -> Dict[NodeName, float]:
-        return {pair[0]: self.__externalMagneticFields[pair[1]] for pair in self.__nodeIndices.items()}
+        return {pair[0]: self.__externalMagneticField[pair[1]] for pair in self.__nodeIndices.items()}
 
     @property
     def CouplingCoefficients(self) -> Dict[NodeName, Dict[NodeName, float]]:
@@ -95,6 +95,11 @@ class IsingModel:
     @PinningParameter.setter
     def PinningParameter(self, pinningParameter: float):
         self.__pinningParameter = max(pinningParameter, 0.e0)  # 強制的に非負実数にする。
+
+    @property
+    def Energy(self) -> float:
+        # Remove double-counting duplicates by multiplying the sum by 1/2.
+        return np.matmul(-self.__spins, 0.5e0 * np.matmul(self.__couplingCoefficients, self.__spins) + self.__externalMagneticField)
 
     def Print(self):
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -145,10 +150,6 @@ class IsingModel:
                     _updateOneSpinForSCA(nodeIndex, spins, self)
                     for nodeIndex in self.__nodeIndices.values()
                 ], dtype=np.int)
-                #self.__spins = np.array(list(map(functools.partial(_updateOneSpinForSCA, spins=spins, isingModel=self), self.__nodeIndices.values())))
-                #self.__spins = np.frompyfunc(functools.partial(_updateOneSpinForSCA, spins=spins, isingModel=self), 1, 1)(np.array(list(self.__nodeIndices.values()), dtype=np.int))
-                #self.__updateOneSpin = np.vectorize(_updateOneSpinForSCA)
-                #self.__spins = self.__updateOneSpin(np.array(list(self.__nodeIndices.values()), dtype=np.int), np.full(len(self.__nodeIndices), spins), np.full(len(self.__nodeIndices), self))
 
         if self.MarkovChain == MCMCMethods.Metropolis:
             metropolisMethod()
@@ -158,10 +159,6 @@ class IsingModel:
             sca()
         else:
             raise ValueError('Illeagal choises')
-
-    def GetEnergy(self):
-        # Remove double-counting duplicates by multiplying the sum by 1/2.
-        return np.matmul(-self.__spins, 0.5e0 * np.matmul(self.__couplingCoefficients, self.__spins) + self.__externalMagneticFields)
 
 # 並列化の都合上、外部関数として定義する。
 def _updateOneSpinForSCA(nodeIndex: int, spins: List[int], isingModel: IsingModel) -> int:

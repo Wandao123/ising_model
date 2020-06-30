@@ -72,10 +72,10 @@ public:
 	};
 
 	IsingModel(const LinearBiases linear, const QuadraticBiases quadratic);
-	void Print();
+	void Print() const;
 	void Update();
 
-	std::string AlgorithmToStr(Algorithm algorithm)
+	std::string AlgorithmToStr(Algorithm algorithm) const
 	{
 		switch (algorithm) {
 		case Algorithm::Metropolis:
@@ -101,7 +101,7 @@ public:
 		this->algorithm = algorithm;
 	}
 
-	double GetEnergy()
+	double GetEnergy() const
 	{
 		// Remove double-counting duplicates by multiplying the sum by 1/2.
 		return -spins.cast<double>().transpose() * (0.5e0 * couplingCoefficients * spins.cast<double>() + externalMagneticField);
@@ -146,17 +146,17 @@ private:
 	Algorithm algorithm = Algorithm::Metropolis;
 	Rand rand;
 
-	double calcLocalMagneticField(const unsigned int nodeIndex)
+	double calcLocalMagneticField(const unsigned int nodeIndex) const
 	{
 		return (couplingCoefficients * spins.cast<double>())(nodeIndex) + externalMagneticField(nodeIndex);
 	}
 
-	Eigen::VectorXd calcLocalMagneticField(const Configuration& spins)
+	Eigen::VectorXd calcLocalMagneticField(const Configuration& spins) const
 	{
 		return couplingCoefficients * spins.cast<double>() + externalMagneticField;
 	}
 
-	Spin flip(Spin spin)
+	Spin flip(const Spin spin) const
 	{
 		return (spin == Spin::Down) ? Spin::Up : Spin::Down;
 	}

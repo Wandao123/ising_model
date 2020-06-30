@@ -9,6 +9,8 @@ Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "python", "python\python.pyp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpp", "cpp\cpp.vcxproj", "{A53A8A3F-A8E4-4869-8A99-FA1DA6A0E45D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pybind", "pybind\pybind.vcxproj", "{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,20 @@ Global
 		{A53A8A3F-A8E4-4869-8A99-FA1DA6A0E45D}.Release|x64.Build.0 = Release|x64
 		{A53A8A3F-A8E4-4869-8A99-FA1DA6A0E45D}.Release|x86.ActiveCfg = Release|Win32
 		{A53A8A3F-A8E4-4869-8A99-FA1DA6A0E45D}.Release|x86.Build.0 = Release|Win32
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Debug|ARM.ActiveCfg = Debug|Win32
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Debug|ARM64.ActiveCfg = Debug|Win32
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Debug|x64.ActiveCfg = Debug|x64
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Debug|x64.Build.0 = Debug|x64
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Debug|x86.ActiveCfg = Debug|Win32
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Debug|x86.Build.0 = Debug|Win32
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Release|Any CPU.ActiveCfg = Release|Win32
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Release|ARM.ActiveCfg = Release|Win32
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Release|ARM64.ActiveCfg = Release|Win32
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Release|x64.ActiveCfg = Release|x64
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Release|x64.Build.0 = Release|x64
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Release|x86.ActiveCfg = Release|Win32
+		{D7C1D0B5-B45F-4190-A9DA-18EDBE1FEA86}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
