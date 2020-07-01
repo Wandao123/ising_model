@@ -39,7 +39,7 @@ if __name__ == '__main__':
     isingModel.Algorithm = simulatorWithCpp.Algorithm.SCA
 
     output = []
-    for i in range(int(1.e6 + 1)):
+    for i in range(int(1.e3 + 1)):
         isingModel.Temperature = initialTemperature / (2 * np.log(1 + i) + 1.e0)
         isingModel.Update()
         output.append([i, isingModel.Energy, isingModel.Temperature])

@@ -343,9 +343,11 @@ healthchecksdb
 main
 *.o
 *.d
+*.dat
 /python/env/
 *.dll
 *.exp
 *.lib
 *.pyd
-*.dat
+dist/
+*egg-info/
