@@ -41,7 +41,7 @@ IsingModel::IsingModel(const LinearBiases linear, const QuadraticBiases quadrati
 	}
 }
 
-void IsingModel::Print() const
+void IsingModel::Write() const
 {
 	std::cout << "Current spin configuration:" << std::endl;
 	for (auto i = 0; i < spins.size(); i++)
@@ -57,7 +57,7 @@ void IsingModel::Print() const
 /* Hamiltonian: H(s) = - sum_<x,y> J_{xy} s_x s_y - sum_x h_x s_x */
 void IsingModel::Update()
 {
-	static auto MetropolisMethod = [this]() {
+	static auto metropolisMethod = [this]() {
 		unsigned int updatedNodeIndex = rand(spins.size());
 		double energyDifference = 2.e0 * static_cast<int>(spins(updatedNodeIndex)) * calcLocalMagneticField(updatedNodeIndex);
 		if (energyDifference < 0.e0)
@@ -66,7 +66,7 @@ void IsingModel::Update()
 			spins(updatedNodeIndex) = flip(spins(updatedNodeIndex));
 	};
 
-	static auto GlauberDynamics = [this]() {
+	static auto glauberDynamics = [this]() {
 		unsigned int updatedNodeIndex = rand(spins.size());
 		if (rand.Bernoulli(1.e0 / (1.e0 + std::exp(-2.e0 * calcLocalMagneticField(updatedNodeIndex) / temperature))))
 			spins(updatedNodeIndex) = Spin::Up;
@@ -74,7 +74,7 @@ void IsingModel::Update()
 			spins(updatedNodeIndex) = Spin::Down;
 	};
 
-	static auto StochasticCellularAutomata = [this]() {
+	static auto stochasticCellularAutomata = [this]() {
 		// アルゴリズム部分。
 		auto spins = this->spins;
 		auto localMagneticField = calcLocalMagneticField(spins);
@@ -95,7 +95,7 @@ void IsingModel::Update()
 		updateOneSpinForRangeOf((NumThreads - 1) * spins.size() / NumThreads, spins.size());
 	};
 
-	static auto HillClimbing = [this]() {
+	static auto hillClimbing = [this]() {
 		Configuration currentConfiguration = spins;
 		while (true) {
 			//double nextEval = std::numeric_limits<double>::infinity();
@@ -117,17 +117,17 @@ void IsingModel::Update()
 	};
 
 	switch (algorithm) {
-	case Algorithm::Metropolis:
-		MetropolisMethod();
+	case Algorithms::Metropolis:
+		metropolisMethod();
 		break;
-	case Algorithm::Glauber:
-		GlauberDynamics();
+	case Algorithms::Glauber:
+		glauberDynamics();
 		break;
-	case Algorithm::SCA:
-		StochasticCellularAutomata();
+	case Algorithms::SCA:
+		stochasticCellularAutomata();
 		break;
-	case Algorithm::HillClimbing:
-		HillClimbing();
+	case Algorithms::HillClimbing:
+		hillClimbing();
 		break;
 	default:
 		break;

@@ -24,10 +24,8 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="simulators.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="main.py" />
+    <Compile Include="simulator.py" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\pybind\pybind.vcxproj">

@@ -63,7 +63,7 @@ public:
 		Down = -1,
 		Up = +1
 	};
-	enum class Algorithm {
+	enum class Algorithms {
 		Metropolis,
 		Glauber,
 		SCA,
@@ -72,31 +72,31 @@ public:
 	};
 
 	IsingModel(const LinearBiases linear, const QuadraticBiases quadratic);
-	void Print() const;
+	void Write() const;
 	void Update();
 
-	std::string AlgorithmToStr(Algorithm algorithm) const
+	std::string AlgorithmToStr(Algorithms algorithm) const
 	{
 		switch (algorithm) {
-		case Algorithm::Metropolis:
+		case Algorithms::Metropolis:
 			return { "Metropolis method" };
-		case Algorithm::Glauber:
+		case Algorithms::Glauber:
 			return { "Glauber dynamics" };
-		case Algorithm::SCA:
+		case Algorithms::SCA:
 			return { "SCA" };
-		case Algorithm::HillClimbing:
+		case Algorithms::HillClimbing:
 			return { "Hill climbing" };
 		default:
 			return {};
 		}
 	}
 
-	Algorithm GetCurrentAlgorithm() const
+	Algorithms GetCurrentAlgorithm() const
 	{
 		return algorithm;
 	}
 
-	void ChangeAlgorithmTo(const Algorithm algorithm)
+	void ChangeAlgorithmTo(const Algorithms algorithm)
 	{
 		this->algorithm = algorithm;
 	}
@@ -143,7 +143,7 @@ private:
 	Configuration spins;
 	Eigen::VectorXd externalMagneticField;
 	Eigen::MatrixXd couplingCoefficients;
-	Algorithm algorithm = Algorithm::Metropolis;
+	Algorithms algorithm = Algorithms::Metropolis;
 	Rand rand;
 
 	double calcLocalMagneticField(const unsigned int nodeIndex) const

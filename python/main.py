@@ -5,14 +5,12 @@ __author__ = 'Wandao123'
 __date__ = '2020/6/21'
 
 import datetime
-import math
-#import matplotlib.pyplot as plt
 import numpy as np
 import random
 from typing import Dict, Tuple
 
-from simulators import IsingModel, MCMCMethods
-import simulatorWithCpp
+#import simulator
+import simulatorWithCpp as simulator
 
 # Erdo"s-Re'nyi random graph.
 def generateErdosRenyiEdges(maxNodes: int) -> Dict[Tuple[int, int], float]:
@@ -22,25 +20,17 @@ def generateErdosRenyiEdges(maxNodes: int) -> Dict[Tuple[int, int], float]:
 def generateSpinGlassEdges(maxNodes: int) -> Dict[Tuple[int, int], float]:
     return {(i, j): -1 if random.random() <= 0.5e0 else 1 for i in range(maxNodes) for j in range(i + 1, maxNodes)}
 
-def printParameters(isingModel: IsingModel):
-    print(dict(sorted(isingModel.Spins.items(), key=lambda x: x[0])))
-    for i in range(maxNodes):
-        for j in range(maxNodes):
-            print('{0:2.0f}'.format(isingModel.CouplingCoefficients[i][j]), end='')
-        print()
-    print(isingModel.ExternalMagneticField)
-
 if __name__ == '__main__':
     maxNodes = 1024
     quadratic = generateErdosRenyiEdges(maxNodes)
-    isingModel = simulatorWithCpp.IsingModel({}, quadratic)
-    isingModel.PinningParameter = math.sqrt(maxNodes) / 2
+    isingModel = simulator.IsingModel({}, quadratic)
+    isingModel.PinningParameter = np.sqrt(maxNodes) / 2
     initialTemperature = np.sum([np.abs(J) + isingModel.PinningParameter for J in quadratic.values()])
-    isingModel.Algorithm = simulatorWithCpp.Algorithm.SCA
-
+    isingModel.Algorithm = simulator.Algorithms.SCA
+    
     output = []
-    for i in range(int(1.e3 + 1)):
-        isingModel.Temperature = initialTemperature / (2 * np.log(1 + i) + 1.e0)
+    for i in range(int(2.e3 + 1)):
+        isingModel.Temperature = initialTemperature / (np.log(1 + i) + 1.e0)
         isingModel.Update()
         output.append([i, isingModel.Energy, isingModel.Temperature])
         if i % 20 == 0:

@@ -42,7 +42,7 @@ void printStatus(const IsingModel& isingModel)
     for (auto spin : isingModel.GetSpins())
         std::cout << "{" << std::get<int>(spin.first) << ": " << spin.second << "}, ";
     std::cout << "}\n" << std::endl;
-    isingModel.Print();
+    isingModel.Write();
 }
 
 int main()
@@ -58,7 +58,7 @@ int main()
     ss << std::put_time(std::localtime(&time), "%Y-&m-&d %X");
     std::cout << ss.str() << std::endl;*/
     
-    isingModel.ChangeAlgorithmTo(IsingModel::Algorithm::SCA);
+    isingModel.ChangeAlgorithmTo(IsingModel::Algorithms::SCA);
     isingModel.SetTemperature(1.e0);
     //isingModel.SetPinningParameter(std::sqrt(maxNodes));
     isingModel.SetPinningParameter(3.e0 / 2);

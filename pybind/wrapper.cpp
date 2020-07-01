@@ -5,9 +5,6 @@
 
 namespace py = pybind11;
 
-//PYBIND11_MAKE_OPAQUE(LinearBiases);
-//PYBIND11_MAKE_OPAQUE(QuadraticBiases);
-
 PYBIND11_MODULE(simulatorWithCpp, m)
 {
 	m.doc() = "An Ising model simulator";
@@ -15,18 +12,17 @@ PYBIND11_MODULE(simulatorWithCpp, m)
 	py::bind_map<QuadraticBiases>(m, "QuadraticBiases");
 	py::class_<IsingModel> isingModel(m, "IsingModel");
 	isingModel.def(py::init<const LinearBiases, const QuadraticBiases>())
-		//.def(py::init([](const LinearBiases linear, const QuadraticBiases quadratic) { return new IsingModel(linear, quadratic); }))
 		.def_property("Algorithm", &IsingModel::GetCurrentAlgorithm, &IsingModel::ChangeAlgorithmTo)
 		.def_property_readonly("Energy", &IsingModel::GetEnergy)
 		.def_property("Temperature", &IsingModel::GetTemperature, &IsingModel::SetTemperature)
 		.def_property("PinningParameter", &IsingModel::GetPinningParameter, &IsingModel::SetPinningParameter)
 		.def_property_readonly("Spins", &IsingModel::GetSpins)
-		.def("Print", &IsingModel::Print)
+		.def("Write", &IsingModel::Write)
 		.def("Update", &IsingModel::Update);
-	py::enum_<IsingModel::Algorithm>(m, "Algorithm")
-		.value("Metropolis", IsingModel::Algorithm::Metropolis)
-		.value("Glauber", IsingModel::Algorithm::Glauber)
-		.value("SCA", IsingModel::Algorithm::SCA)
-		.value("HillClimbing", IsingModel::Algorithm::HillClimbing)
+	py::enum_<IsingModel::Algorithms>(m, "Algorithms")
+		.value("Metropolis", IsingModel::Algorithms::Metropolis)
+		.value("Glauber", IsingModel::Algorithms::Glauber)
+		.value("SCA", IsingModel::Algorithms::SCA)
+		.value("HillClimbing", IsingModel::Algorithms::HillClimbing)
 		.export_values();
 }
