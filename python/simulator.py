@@ -32,7 +32,8 @@ class IsingModel:
         ]
         self.__spins: List[int] = np.ones(len(self.__nodeLabels), dtype=np.int8)
         self.__externalMagneticField: List[float] = np.array([  # 外部磁場の強さ。
-            linear[index] if self.__nodeLabels[index] in linear else 0
+            linear[self.__nodeLabels[index]]
+            if self.__nodeLabels[index] in linear else 0
             for index in range(len(self.__nodeLabels))
         ], dtype=np.float)
         self.__couplingCoefficients: List[List[float]] = np.zeros((len(self.__nodeLabels),)*2, dtype=np.float)  # スピン同士の結合定数（対角成分が0の対称行列）。
