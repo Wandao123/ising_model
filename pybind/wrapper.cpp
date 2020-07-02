@@ -2,6 +2,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
+#include <pybind11/iostream.h>
 
 namespace py = pybind11;
 
@@ -16,8 +17,19 @@ PYBIND11_MODULE(simulatorWithCpp, m)
 		.def_property_readonly("Energy", &IsingModel::GetEnergy)
 		.def_property("Temperature", &IsingModel::GetTemperature, &IsingModel::SetTemperature)
 		.def_property("PinningParameter", &IsingModel::GetPinningParameter, &IsingModel::SetPinningParameter)
-		.def_property_readonly("Spins", &IsingModel::GetSpins)
-		.def("Write", &IsingModel::Write)
+		.def_property_readonly("Spins", [](const IsingModel& self) -> std::map<Node, int> {
+			std::map<Node, int> temp;
+			for (auto pair : self.GetSpins())
+				temp[pair.first] = pair.second;
+			return temp;
+		})
+		.def("Write", [](const IsingModel& self) {
+			py::scoped_ostream_redirect stream(
+				std::cout,
+				py::module::import("sys").attr("stdout")
+			);
+			self.Write();
+		})
 		.def("Update", &IsingModel::Update);
 	py::enum_<IsingModel::Algorithms>(m, "Algorithms")
 		.value("Metropolis", IsingModel::Algorithms::Metropolis)

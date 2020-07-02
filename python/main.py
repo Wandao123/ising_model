@@ -27,7 +27,7 @@ if __name__ == '__main__':
     isingModel.PinningParameter = np.sqrt(maxNodes) / 2
     initialTemperature = np.sum([np.abs(J) + isingModel.PinningParameter for J in quadratic.values()])
     isingModel.Algorithm = simulator.Algorithms.SCA
-    
+
     output = []
     for i in range(int(2.e3 + 1)):
         isingModel.Temperature = initialTemperature / (np.log(1 + i) + 1.e0)
