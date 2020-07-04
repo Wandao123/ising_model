@@ -345,10 +345,12 @@ main
 *.d
 *.dat
 /python/env/
+/python/env-linux
 *.dll
 *.exp
 *.lib
 *.pyd
-dist/
-*egg-info/
+/pybind/dist/
+/pybind/build/
+/pybind/*egg-info/
 .ipynb_checkpoints/
