@@ -350,7 +350,7 @@ main
 *.exp
 *.lib
 *.pyd
-/pybind/dist/
-/pybind/build/
-/pybind/*egg-info/
+/dist/
+/build/
+/*egg-info/
 .ipynb_checkpoints/

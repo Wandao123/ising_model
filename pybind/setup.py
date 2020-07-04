@@ -25,14 +25,17 @@ ext_modules = [
         'simulatorWithCpp',
         # Sort input source files to ensure bit-for-bit reproducible builds
         # (https://github.com/pybind/python_example/pull/53)
-        sorted(['wrapper.cpp', '../cpp/simulator.cpp']),
+        sorted(['pybind/wrapper.cpp', 'cpp/simulator.cpp']),
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
+            'cpp',
         ],
         language='c++'
     ),
 ]
+
+headers = ['cpp/simulator.h']
 
 # cf http://bugs.python.org/issue26689
 def has_flag(compiler, flagname):
@@ -108,7 +111,10 @@ setup(
     description='An Ising model simulator',
     long_description='',
     ext_modules=ext_modules,
+    headers=headers,
     setup_requires=['pybind11>=2.4.3'],
     cmdclass={'build_ext': BuildExt},
     zip_safe=False,
+    script_name='./pybind/setup.py',
+    data_files=['./pybind/setup.py'],
 )
