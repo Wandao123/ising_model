@@ -8,7 +8,7 @@ import setuptools
 
 __author__ = 'Wandao123'
 __date__ = '2020/7/1'
-__version__ = '1.1'
+__version__ = '1.2'
 
 class get_pybind_include(object):
     """Helper class to determine the pybind11 include path

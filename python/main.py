@@ -5,6 +5,7 @@ __author__ = 'Wandao123'
 __date__ = '2020/6/21'
 
 import datetime
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import Dict, Tuple
@@ -20,6 +21,17 @@ def generateErdosRenyiEdges(maxNodes: int, probability: float) -> Dict[Tuple[int
 def generateSpinGlassEdges(maxNodes: int, probability: float) -> Dict[Tuple[int, int], float]:
     return {(i, j): -1 if np.random.random() <= probability else 1 for i in range(maxNodes) for j in range(i + 1, maxNodes)}
 
+# 2-dimensional square lattice.
+def generateSquareLatticeEdges(maxNodes: int) -> Dict[Tuple[int, int], float]:
+    columns = math.ceil(math.sqrt(maxNodes))
+    result = {}
+    for i in range(maxNodes - 1):
+        if (i + 1) % columns > 0:
+            result[(i, i + 1)] = 1
+        if (i + columns) < maxNodes:
+            result[(i, i + columns)] = 1
+    return result
+
 if __name__ == '__main__':
     # ランダム・グラフ用の乱数の初期化。
     seed = 32
@@ -29,7 +41,6 @@ if __name__ == '__main__':
     maxTrials = int(1.e5 + 1)
     maxNodes = 1024
     probability = 0.5e0
-    #quadratic = generateSpinGlassEdges(maxNodes, probability)
     quadratic = generateErdosRenyiEdges(maxNodes, probability)
     isingModel = simulator.IsingModel({}, quadratic)
     isingModel.PinningParameter = isingModel.CalcLargestEigenvalue() / 2
