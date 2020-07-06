@@ -72,8 +72,9 @@ public:
 	};
 
 	IsingModel(const LinearBiases linear, const QuadraticBiases quadratic);
-	void Write() const;
+	double CalcLargestEigenvalue() const;
 	void Update();
+	void Write() const;
 
 	std::string AlgorithmToStr(Algorithms algorithm) const
 	{

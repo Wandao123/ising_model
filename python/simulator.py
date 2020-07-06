@@ -7,6 +7,7 @@ from enum import Enum
 import math
 import multiprocess as mp  # 標準ライブラリと異なることに注意。
 import numpy as np
+import numpy.linalg as LA
 import random
 from typing import Dict, List, Tuple, TypeVar
 
@@ -79,15 +80,8 @@ class IsingModel:
         # Remove double-counting duplicates by multiplying the sum by 1/2.
         return np.matmul(-self.__spins, 0.5e0 * np.matmul(self.__couplingCoefficients, self.__spins) + self.__externalMagneticField)
 
-    def Write(self):
-        print('Current spin configuration:')
-        print(self.__spins)
-        print()
-        print('External magnetic field:')
-        print(self.__externalMagneticField)
-        print('Coupling coefficinets:')
-        print(self.__couplingCoefficients)
-        print('Algorithm:', self.Algorithm.value)
+    def CalcLargestEigenvalue(self) -> float:
+        return np.amax(LA.eigvalsh(-self.__couplingCoefficients))
 
     def Update(self):
         def metropolisMethod():
@@ -132,7 +126,7 @@ class IsingModel:
                 # multiprocess.Poolを使う方法。
                 with mp.Pool(processes=NumProcesses) as pool:
                    self.__spins = np.array(pool.map(lambda nodeIndex: updateOneSpin(spins[nodeIndex], localMagneticField[nodeIndex]), range(len(self.__nodeLabels))))
-                
+
                 # multiprocess.Processesを使う方法。
                 #queue = mp.Queue()
                 #splitNodeIndicesArray = np.array_split(np.arange(len(self.__nodeLabels)), NumProcesses)  # 各プロセスへパメータの組を適当に振り分ける。
@@ -156,3 +150,13 @@ class IsingModel:
             stochasticCellularAutomata()
         else:
             raise ValueError('Illeagal choises')
+
+    def Write(self):
+        print('Current spin configuration:')
+        print(self.__spins)
+        print()
+        print('External magnetic field:')
+        print(self.__externalMagneticField)
+        print('Coupling coefficinets:')
+        print(self.__couplingCoefficients)
+        print('Algorithm:', self.Algorithm.value)

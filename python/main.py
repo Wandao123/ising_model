@@ -29,9 +29,10 @@ if __name__ == '__main__':
     maxTrials = int(1.e5 + 1)
     maxNodes = 1024
     probability = 0.5e0
+    #quadratic = generateSpinGlassEdges(maxNodes, probability)
     quadratic = generateErdosRenyiEdges(maxNodes, probability)
     isingModel = simulator.IsingModel({}, quadratic)
-    isingModel.PinningParameter = maxNodes / 2
+    isingModel.PinningParameter = isingModel.CalcLargestEigenvalue() / 2
     isingModel.Algorithm = simulator.Algorithms.SCA
 
     # 前処理。
@@ -47,8 +48,8 @@ if __name__ == '__main__':
     # サンプリング。
     samples = np.empty((0, 3), dtype=np.float)
     for n in range(maxTrials):
-        isingModel.Temperature = initialTemperature / (maxNodes * np.log(1 + n) + 1.e0)  # 対数スケジュール。
-        #isingModel.Temperature = initialTemperature / (n + 1.e0)  # 線形積算スケジュール。
+        #isingModel.Temperature = initialTemperature / (np.sqrt(maxNodes) * np.log(1 + n) + 1.e0)  # 対数スケジュール。
+        isingModel.Temperature = initialTemperature / (n + 1.e0)  # 線形積算スケジュール。
         #isingModel.Temperature = 1.e0 + (initialTemperature - 1.e0) * (maxTrials - n) / maxTrials  # 線形加算スケジュール。
         #isingModel.Temperature = initialTemperature * 0.98 ** n  # 指数スケジュール。
         isingModel.Update()
@@ -61,7 +62,7 @@ if __name__ == '__main__':
             samples,
             fmt='%d %.5e %.7e',
             delimiter=' ',
-            header='date: ' + datetime.datetime.now().isoformat() + '.\npinning parameter = ' + str(isingModel.PinningParameter) + '\nrandom seed = ' + str(seed)
+            header='date: ' + datetime.datetime.now().isoformat() + '\n' + 'pinning parameter = ' + str(isingModel.PinningParameter) + '\n' + 'random seed = ' + str(seed)
         )
 
     # スコア。

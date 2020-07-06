@@ -60,17 +60,17 @@ int main()
     ss << std::put_time(std::localtime(&time), "%Y-&m-&d %X");
     std::cout << ss.str() << std::endl;*/
 
-    isingModel.ChangeAlgorithmTo(IsingModel::Algorithms::Glauber);
+    isingModel.ChangeAlgorithmTo(IsingModel::Algorithms::SCA);
     double initialTemperature = std::accumulate(
         quadratic.begin(), quadratic.end(), 0.e0,
         [](double acc, const QuadraticBiases::value_type& p) -> double { return acc + std::abs(p.second); }
     );
     isingModel.SetTemperature(initialTemperature);
-    isingModel.SetPinningParameter(maxNodes);
+    isingModel.SetPinningParameter(isingModel.CalcLargestEigenvalue() * 0.5e0);
     for (auto n = 0; n <= maxTrials; n++) {
-        isingModel.SetTemperature(initialTemperature / (std::sqrt(maxNodes) * std::log(n + 1) + 1.e0));  // A logarithmic cooling schedule.
-        //isingModel.SetTemperature(initialTemperature / (n + 1.e0));  // A linear multiplicative cooling schedule.
-        //isingModel.SetTemperature(1.e0 + (initialTemperature - 1.e0) * (maxTrials - n) / maxTrials);  // A linear additive cooling schedule (whose final temperature is 1.e0).
+        //isingModel.SetTemperature(initialTemperature / (std::sqrt(maxNodes) * std::log(n + 1) + 1.e0));  // Alogarithmic cooling schedule.
+        isingModel.SetTemperature(initialTemperature / (n + 1.e0));  // A linear multiplicative cooling schedule.
+        //isingModel.SetTemperature(1.e0 + (initialTemperature - 1.e0) * (maxTrials - n) / maxTrials);  // A linearadditive cooling schedule (whose final temperature is 1.e0).
         //isingModel.SetTemperature(initialTemperature * std::pow(0.9e0, n));  // An exponential cooling schedule.
         isingModel.Update();
         std::cout << std::setw(7) << std::left << n

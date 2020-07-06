@@ -80,13 +80,13 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetName>simulatorWithCpp</TargetName>
     <TargetExt>.pyd</TargetExt>
-    <OutDir>$(SolutionDir)python</OutDir>
+    <OutDir>$(SolutionDir)python\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>simulatorWithCpp</TargetName>
     <TargetExt>.pyd</TargetExt>
-    <OutDir>$(SolutionDir)python</OutDir>
+    <OutDir>$(SolutionDir)python\</OutDir>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <VcpkgUseStatic>false</VcpkgUseStatic>

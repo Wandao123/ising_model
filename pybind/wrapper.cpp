@@ -23,14 +23,15 @@ PYBIND11_MODULE(simulatorWithCpp, m)
 				temp[pair.first] = pair.second;
 			return temp;
 		})
+		.def("CalcLargestEigenvalue", &IsingModel::CalcLargestEigenvalue)
+		.def("Update", &IsingModel::Update)
 		.def("Write", [](const IsingModel& self) {
 			py::scoped_ostream_redirect stream(
 				std::cout,
 				py::module::import("sys").attr("stdout")
 			);
 			self.Write();
-		})
-		.def("Update", &IsingModel::Update);
+		});
 	py::enum_<IsingModel::Algorithms>(m, "Algorithms")
 		.value("Metropolis", IsingModel::Algorithms::Metropolis)
 		.value("Glauber", IsingModel::Algorithms::Glauber)

@@ -1,4 +1,5 @@
 ﻿#include "simulator.h"
+#include <Eigen/Eigenvalues>
 #include <future>
 #include <iomanip>
 #include <iostream>
@@ -41,20 +42,14 @@ IsingModel::IsingModel(const LinearBiases linear, const QuadraticBiases quadrati
 	}
 }
 
-void IsingModel::Write() const
+// 行列 (-J_{x, y})_{x, y} の最大固有値を計算する。
+double IsingModel::CalcLargestEigenvalue() const
 {
-	std::cout << "Current spin configuration:" << std::endl;
-	for (auto i = 0; i < spins.size(); i++)
-		std::cout << std::setw(2) << spins(i);
-	std::cout << std::endl;
-	std::cout << "External magnetic field:" << std::endl;
-	std::cout << externalMagneticField.transpose() << std::endl;
-	std::cout << "Coupling coefficinets:" << std::endl;
-	std::cout << couplingCoefficients << std::endl;
-	std::cout << "Algorithm: " << AlgorithmToStr(algorithm) << std::endl;
+	Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(-couplingCoefficients);
+	return solver.eigenvalues().reverse()(0);
 }
 
-/* Hamiltonian: H(s) = - sum_<x,y> J_{xy} s_x s_y - sum_x h_x s_x */
+// Hamiltonian: H(s) = - sum_<x,y> J_{xy} s_x s_y - sum_x h_x s_x
 void IsingModel::Update()
 {
 	static auto metropolisMethod = [this]() {
@@ -132,4 +127,17 @@ void IsingModel::Update()
 	default:
 		break;
 	}
+}
+
+void IsingModel::Write() const
+{
+	std::cout << "Current spin configuration:" << std::endl;
+	for (auto i = 0; i < spins.size(); i++)
+		std::cout << std::setw(2) << spins(i);
+	std::cout << std::endl;
+	std::cout << "External magnetic field:" << std::endl;
+	std::cout << externalMagneticField.transpose() << std::endl;
+	std::cout << "Coupling coefficinets:" << std::endl;
+	std::cout << couplingCoefficients << std::endl;
+	std::cout << "Algorithm: " << AlgorithmToStr(algorithm) << std::endl;
 }
