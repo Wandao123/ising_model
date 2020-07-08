@@ -3,27 +3,33 @@
 __author__ = 'Wandao123'
 __date__ = '2020/6/21'
 
-from enum import Enum
+from enum import Enum, auto
 import multiprocess as mp  # 標準ライブラリと異なることに注意。
 import numpy as np
 import numpy.linalg as LA
-import random
-from typing import Dict, List, Tuple, TypeVar
+from typing import Dict, List, Optional, Tuple, Union  # TypeVarとUnionのどちらが良いのか？　ラベルの型を混ぜられるようにするためにUnionを使う？
 
 class Algorithms(Enum):
     Metropolis = 'Metropolis method'
     Glauber = 'Glauber dynamics'
     SCA = 'Stochastic Cellular Automata'
 
+class ConfigurationsType(Enum):
+    AllDown = auto()
+    AllUp = auto()
+    Uniform = auto()
+
 class NodeType(Enum):
     Spin = frozenset({-1, +1})
     Binary = frozenset({0, 1})
 
-NodeName = TypeVar('NodeName', int, str)
+#NodeName = TypeVar('NodeName', int, str)
+NodeName = Union[int, str]
 
 class IsingModel:
     """An Ising model simulator"""
     def __init__(self, linear: Dict[NodeName, float], quadratic: Dict[Tuple[NodeName, NodeName], float]):
+        self.__rng: np.random.Generator = np.random.default_rng()
         self.__temperature: float = 0  # 温度パラメータ。
         self.__pinningParameter: float = 0  # SCAのpinning parameter.
         self.__nodeLabels: List[NodeName] = [  # __spinsの添字と頂点の名前との対応。
@@ -82,18 +88,31 @@ class IsingModel:
     def CalcLargestEigenvalue(self) -> float:
         return np.amax(LA.eigvalsh(-self.__couplingCoefficients))
 
+    def GiveSpins(self, confType: ConfigurationsType):
+        if confType == ConfigurationsType.AllDown:
+            self.__spins = np.full(self.__spins.size, -1)
+        elif confType == ConfigurationsType.AllUp:
+            self.__spins = np.ones(self.__spins.size)
+        elif confType == ConfigurationsType.Uniform:
+            self.__spins = self.__rng.choice([-1, 1], self.__spins.size)
+        else:
+            raise ValueError('Illeagal choises')
+
+    def SetSeed(self, seed: Optional[int]=None):  # numpy.randomのドキュメントを見るに、int以外も渡せるようにするべき？
+        self.__rng = np.random.default_rng(seed)
+
     def Update(self):
         def metropolisMethod():
-            updatedNode: int = random.randrange(len(self.__spins))
+            updatedNode: int = self.__rng.integers(len(self.__spins))
             energyDifference: float = 2.e0 * self.__spins[updatedNode] * self.__calcLocalMagneticFieldAt(updatedNode)
             if energyDifference < 0.e0:
                 self.__spins[updatedNode] = -self.__spins[updatedNode]
-            elif random.random() <= (np.exp(-energyDifference / self.__temperature) if self.__temperature != 0.e0 else 0.e0):
+            elif self.__rng.random() <= (np.exp(-energyDifference / self.__temperature) if self.__temperature != 0.e0 else 0.e0):
                 self.__spins[updatedNode] = -self.__spins[updatedNode]
 
         def glauberDynamics():
-            updatedNode: int = random.randrange(len(self.__spins))
-            if random.random() <= 1.e0 / (1.e0 + np.exp(-2.e0 * self.__calcLocalMagneticFieldAt(updatedNode) / self.__temperature)):
+            updatedNode: int = self.__rng.integers(len(self.__spins))
+            if self.__rng.random() <= 1.e0 / (1.e0 + np.exp(-2.e0 * self.__calcLocalMagneticFieldAt(updatedNode) / self.__temperature)):
                 self.__spins[updatedNode] = +1
             else:
                 self.__spins[updatedNode] = -1
@@ -104,7 +123,7 @@ class IsingModel:
             localMagneticField = self.__calcLocalMagneticField(spins)
 
             def updateOneSpin(updatedSpin: int, localMagneticFieldAt: float) -> int:
-                if random.random() <= 1.e0 / (1.e0 + np.exp((updatedSpin * localMagneticFieldAt + self.__pinningParameter) / self.__temperature)):
+                if self.__rng.random() <= 1.e0 / (1.e0 + np.exp((updatedSpin * localMagneticFieldAt + self.__pinningParameter) / self.__temperature)):
                     return -updatedSpin
                 else:
                     return updatedSpin
@@ -113,7 +132,7 @@ class IsingModel:
                 result = np.empty(nodeIndicesArray.size, dtype=np.int)
                 print(nodeIndicesArray)
                 for i in range(result.size):
-                    if random.random() <= 1.e0 / (1.e0 + np.exp((spins[nodeIndicesArray[i]] * localMagneticField[nodeIndicesArray[i]] + self.__pinningParameter) / self.__temperature)):
+                    if self.__rng.random() <= 1.e0 / (1.e0 + np.exp((spins[nodeIndicesArray[i]] * localMagneticField[nodeIndicesArray[i]] + self.__pinningParameter) / self.__temperature)):
                         result[i] = -spins[nodeIndicesArray[i]]
                     else:
                         result[i] = spins[nodeIndicesArray[i]]

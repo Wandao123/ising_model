@@ -40,17 +40,15 @@ def Initialize() -> simulator.IsingModel:
     # Create a simulator.IsingModel instance.
     quadratic = GenerateErdosRenyiEdges(MaxNodes, Probability)
     isingModel = simulator.IsingModel({}, quadratic)
-    isingModel.PinningParameter = isingModel.CalcLargestEigenvalue() / 2
     isingModel.Algorithm = simulator.Algorithms.SCA
 
-    # Preprocess IsingModel's spin configuration.
+    # Preprocess IsingModel's spin configuration and parameters.
+    isingModel.SetSeed(1024)  # Always use the same initial configuration.
+    isingModel.GiveSpins(simulator.ConfigurationsType.Uniform)
+    isingModel.SetSeed()
     if isingModel.Algorithm == simulator.Algorithms.SCA:
-        isingModel.Temperature = 2.e0 * np.sum([np.abs(J) for J in quadratic.values()]) + MaxNodes * isingModel.PinningParameter
-        isingModel.Update()
-    else:
-        isingModel.Temperature = 2.e0 * np.sum([np.abs(J) for J in quadratic.values()])
-        for n in range(MaxNodes):
-            isingModel.Update()
+        isingModel.PinningParameter = isingModel.CalcLargestEigenvalue() / 2
+    isingModel.Temperature = 2.e0 * np.sum([np.abs(J) for J in quadratic.values()]) + MaxNodes * isingModel.PinningParameter
 
     return isingModel
 

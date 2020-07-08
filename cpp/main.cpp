@@ -7,9 +7,12 @@
 #include <numeric>
 //#include <sstream>
 
+const unsigned int Seed = 32;
+
 QuadraticBiases generateErdosRenyiEdges(const int maxNodes, const double probability)
 {
     Rand rand;
+    rand.Seed(Seed);
     QuadraticBiases result;
     for (auto i = 0; i < maxNodes; i++) {
         for (auto j = i + 1; j < maxNodes; j++) {
@@ -25,6 +28,7 @@ QuadraticBiases generateErdosRenyiEdges(const int maxNodes, const double probabi
 QuadraticBiases generateSpinGlassEdges(const int maxNodes, const double probability)
 {
     Rand rand;
+    rand.Seed(Seed);
     QuadraticBiases result;
     for (auto i = 0; i < maxNodes; i++) {
         for (auto j = i + 1; j < maxNodes; j++) {
@@ -49,24 +53,28 @@ void printStatus(const IsingModel& isingModel)
 
 int main()
 {
-    const unsigned int maxNodes = 1024;
+    const unsigned int maxNodes = 256;
     const double probability = 0.5e0;
     const unsigned int maxTrials = static_cast<int>(1.e4);
     auto quadratic = generateErdosRenyiEdges(maxNodes, probability);
     IsingModel isingModel({}, quadratic);
+    isingModel.ChangeAlgorithmTo(IsingModel::Algorithms::SCA);
+    if (isingModel.GetCurrentAlgorithm() == IsingModel::Algorithms::SCA)
+        isingModel.SetPinningParameter(isingModel.CalcLargestEigenvalue() * 0.5e0);
+    double initialTemperature = std::accumulate(
+        quadratic.begin(), quadratic.end(), 0.e0,
+        [](double acc, const QuadraticBiases::value_type& p) -> double { return acc + std::abs(p.second); }
+    ) + isingModel.GetPinningParameter();
+    isingModel.SetTemperature(initialTemperature);
+    isingModel.SetSeed(Seed * 2);
+    isingModel.GiveSpins(IsingModel::ConfigurationsType::Uniform);
+    isingModel.SetSeed();  // SCAのときには並列処理をするためか、seedを指定しても固定されない。
 
     /*auto time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::stringstream ss;
     ss << std::put_time(std::localtime(&time), "%Y-&m-&d %X");
     std::cout << ss.str() << std::endl;*/
 
-    isingModel.ChangeAlgorithmTo(IsingModel::Algorithms::SCA);
-    double initialTemperature = std::accumulate(
-        quadratic.begin(), quadratic.end(), 0.e0,
-        [](double acc, const QuadraticBiases::value_type& p) -> double { return acc + std::abs(p.second); }
-    );
-    isingModel.SetTemperature(initialTemperature);
-    isingModel.SetPinningParameter(isingModel.CalcLargestEigenvalue() * 0.5e0);
     for (auto n = 0; n <= maxTrials; n++) {
         //isingModel.SetTemperature(initialTemperature / (std::sqrt(maxNodes) * std::log(n + 1) + 1.e0));  // Alogarithmic cooling schedule.
         isingModel.SetTemperature(initialTemperature / (n + 1.e0));  // A linear multiplicative cooling schedule.

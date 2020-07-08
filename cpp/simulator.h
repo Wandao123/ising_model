@@ -19,6 +19,16 @@ public:
 		mt.seed(rd());
 	}
 
+	void Seed()
+	{
+		mt.seed(rd());
+	}
+
+	void Seed(const std::int_fast64_t seed)
+	{
+		mt.seed(seed);
+	}
+
 	std::uint_fast64_t operator()()
 	{
 		return mt();
@@ -70,9 +80,15 @@ public:
 		HillClimbing,
 		SIZE
 	};
+	enum class ConfigurationsType {
+		AllDown,
+		AllUp,
+		Uniform
+	};
 
 	IsingModel(const LinearBiases linear, const QuadraticBiases quadratic);
 	double CalcLargestEigenvalue() const;
+	void GiveSpins(const ConfigurationsType configurationType);
 	void Update();
 	void Write() const;
 
@@ -90,6 +106,16 @@ public:
 		default:
 			return {};
 		}
+	}
+
+	void SetSeed()
+	{
+		rand.Seed();
+	}
+
+	void SetSeed(const unsigned int seed)
+	{
+		rand.Seed(seed);
 	}
 
 	Algorithms GetCurrentAlgorithm() const

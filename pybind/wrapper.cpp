@@ -3,6 +3,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
 #include <pybind11/iostream.h>
+#include <optional>
 
 namespace py = pybind11;
 
@@ -24,6 +25,13 @@ PYBIND11_MODULE(simulatorWithCpp, m)
 			return temp;
 		})
 		.def("CalcLargestEigenvalue", &IsingModel::CalcLargestEigenvalue)
+		.def("GiveSpins", &IsingModel::GiveSpins)
+		.def("SetSeed", [](IsingModel& self, const std::optional<unsigned int> seed = std::nullopt) {
+			if (seed)
+				self.SetSeed(seed.value());
+			else
+				self.SetSeed();
+		}, py::arg("seed") = std::nullopt)
 		.def("Update", &IsingModel::Update)
 		.def("Write", [](const IsingModel& self) {
 			py::scoped_ostream_redirect stream(
@@ -37,5 +45,10 @@ PYBIND11_MODULE(simulatorWithCpp, m)
 		.value("Glauber", IsingModel::Algorithms::Glauber)
 		.value("SCA", IsingModel::Algorithms::SCA)
 		.value("HillClimbing", IsingModel::Algorithms::HillClimbing)
+		.export_values();
+	py::enum_<IsingModel::ConfigurationsType>(m, "ConfigurationsType")
+		.value("AllDown", IsingModel::ConfigurationsType::AllDown)
+		.value("AllUp", IsingModel::ConfigurationsType::AllUp)
+		.value("Uniform", IsingModel::ConfigurationsType::Uniform)
 		.export_values();
 }

@@ -49,6 +49,24 @@ double IsingModel::CalcLargestEigenvalue() const
 	return solver.eigenvalues().reverse()(0);
 }
 
+void IsingModel::GiveSpins(const ConfigurationsType configurationType)
+{
+	switch (configurationType) {
+	case ConfigurationsType::AllDown:
+		spins.fill(Spin::Down);
+		break;
+	case ConfigurationsType::AllUp:
+		spins.fill(Spin::Up);
+		break;
+	case ConfigurationsType::Uniform:
+		for (auto i = 0; i < spins.size(); i++)
+			spins(i) = rand.Bernoulli(0.5e0) ? Spin::Down : Spin::Up;
+		break;
+	default:
+		break;
+	}
+}
+
 // Hamiltonian: H(s) = - sum_<x,y> J_{xy} s_x s_y - sum_x h_x s_x
 void IsingModel::Update()
 {
