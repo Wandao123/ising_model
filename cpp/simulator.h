@@ -36,26 +36,38 @@ public:
 
 	std::int_fast64_t operator()(const std::int_fast64_t maximum)
 	{
-		std::uniform_int_distribution<> dist(0, (maximum >= 0) ? maximum - 1 : 0);
-		return dist(mt);
+		std::uniform_int_distribution<> distr(0, (maximum >= 0) ? maximum - 1 : 0);
+		return distr(mt);
 	}
 
 	std::int_fast64_t operator()(const std::int_fast64_t minimum, const std::int_fast64_t maximum)
 	{
-		std::uniform_int_distribution<> dist((minimum <= maximum) ? minimum : maximum, (minimum <= maximum) ? maximum : minimum);
-		return dist(mt);
+		std::uniform_int_distribution<> distr((minimum <= maximum) ? minimum : maximum, (minimum <= maximum) ? maximum : minimum);
+		return distr(mt);
 	}
 
 	bool Bernoulli(const double probability)
 	{
-		std::bernoulli_distribution dist(probability);
-		return dist(mt);
+		std::bernoulli_distribution distr(probability);
+		return distr(mt);
+	}
+
+	double Exponential(const double intensity = 1.e0)
+	{
+		std::exponential_distribution<double> distr(intensity);
+		return distr(mt);
+	}
+
+	double Logistic(const double location = 0.e0, const double scale = 1.e0)
+	{
+		double u = Uniform();
+		return location + scale * std::log(u / (1.e0 - u));  // 逆関数法による生成。
 	}
 
 	double Uniform()
 	{
-		std::uniform_real_distribution<double> dist(0.e0, 1.e0);
-		return dist(mt);
+		std::uniform_real_distribution<double> distr(0.e0, 1.e0);
+		return distr(mt);
 	}
 private:
 	std::random_device rd;
@@ -77,6 +89,7 @@ public:
 		Metropolis,
 		Glauber,
 		SCA,
+		MA,
 		HillClimbing,
 		SIZE
 	};
@@ -100,11 +113,13 @@ public:
 		case Algorithms::Glauber:
 			return { "Glauber dynamics" };
 		case Algorithms::SCA:
-			return { "SCA" };
+			return { "Stochastic cellular automata" };
+		case Algorithms::MA:
+			return { "Momentum annealing" };
 		case Algorithms::HillClimbing:
 			return { "Hill climbing" };
 		default:
-			return {};
+			return { "Warning: Unknown type." };
 		}
 	}
 
@@ -154,12 +169,27 @@ public:
 		this->pinningParameter = (pinningParameter >= 0.e0) ? pinningParameter : 0.e0;
 	}
 
-	std::map<Node, Spin> GetSpins() const
+	std::map<Node, Spin> GetSpinsAsDictionary() const
 	{
 		std::map<Node, Spin> result;
 		for (auto i = 0; i < nodeLabels.size(); i++)
 			result[nodeLabels[i]] = spins[i];
 		return result;
+	}
+
+	Eigen::VectorXi GetSpins() const
+	{
+		return spins.cast<int>();
+	}
+
+	Eigen::VectorXd GetExternalMagneticField() const
+	{
+		return externalMagneticField;
+	}
+
+	Eigen::MatrixXd GetCouplingCoefficients() const
+	{
+		return couplingCoefficients;
 	}
 private:
 	using Configuration = Eigen::Matrix<Spin, Eigen::Dynamic, 1>;

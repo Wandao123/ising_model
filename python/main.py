@@ -13,7 +13,7 @@ from typing import Dict, List, Tuple
 #import simulator
 import simulatorWithCpp as simulator
 
-MaxTrials = int(5.e4)
+MaxTrials = int(1.e3)
 MaxNodes = 256
 Probability = 0.5e0
 
@@ -40,13 +40,13 @@ def Initialize() -> simulator.IsingModel:
     # Create a simulator.IsingModel instance.
     quadratic = GenerateErdosRenyiEdges(MaxNodes, Probability)
     isingModel = simulator.IsingModel({}, quadratic)
-    isingModel.Algorithm = simulator.Algorithms.SCA
+    isingModel.Algorithm = simulator.Algorithms.MA
 
     # Preprocess IsingModel's spin configuration and parameters.
     isingModel.SetSeed(1024)  # Always use the same initial configuration.
     isingModel.GiveSpins(simulator.ConfigurationsType.Uniform)
     isingModel.SetSeed()
-    if isingModel.Algorithm == simulator.Algorithms.SCA:
+    if isingModel.Algorithm == simulator.Algorithms.SCA or isingModel.Algorithm == simulator.Algorithms.MA:
         isingModel.PinningParameter = isingModel.CalcLargestEigenvalue() / 2
     isingModel.Temperature = 2.e0 * np.sum([np.abs(J) for J in quadratic.values()]) + MaxNodes * isingModel.PinningParameter
 
@@ -56,9 +56,11 @@ def SampleData(isingModel: simulator.IsingModel, initialTemperature: float) -> L
     result = np.empty((0, 3), dtype=np.float)
     for n in range(MaxTrials + 1):
         #isingModel.Temperature = initialTemperature / (np.sqrt(MaxNodes) * np.log(1 + n) + 1.e0)  # A logarithmic cooling schedule.
-        isingModel.Temperature = initialTemperature / (n + 1.e0)  # A linear multiplicative cooling schedule.
+        #isingModel.Temperature = initialTemperature / (n + 1.e0)  # A linear multiplicative cooling schedule.
         #isingModel.Temperature = 1.e0 + (initialTemperature - 1.e0) * (MaxTrials - n) / MaxTrials  # A linear additive cooling schedule.
-        #isingModel.Temperature = initialTemperature * 0.99 ** n  # An exponential cooling schedule.
+        isingModel.Temperature = initialTemperature * 0.99 ** n  # An exponential cooling schedule.
+        #isingModel.Temperature = 1.e2 * np.exp(-1.e-2 * n)  # B. FK.'s results.
+        #isingModel.Temperature = np.exp(-1.e-2 * (n - 200))
         isingModel.Update()
         result = np.append(result, np.array([n, isingModel.Energy, isingModel.Temperature], dtype=np.float).reshape((1, 3)), axis=0)
         if n % (MaxTrials // 10) == 0:
@@ -86,7 +88,8 @@ if __name__ == '__main__':
 
     # Run a simulation.
     isingModel = Initialize()
-    print(np.array(list(isingModel.Spins.values())))
+    isingModel.Write()
+    print()
     data = SampleData(isingModel, isingModel.Temperature)
     print('The minimum energy found by the simulator: {}'.format(np.amin(data[:, 1])))
     DrawGraphFor(data)

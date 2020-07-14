@@ -3,9 +3,34 @@
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
 #include <pybind11/iostream.h>
+#include <pybind11/eigen.h>
 #include <optional>
 
 namespace py = pybind11;
+/*using RowMajorVectorXd = Eigen::Matrix<double, Eigen::Dynamic, 1, Eigen::RowMajor>;
+
+RowMajorVectorXd ConvertToRowMajor(Eigen::VectorXd vector)
+{
+	RowMajorVectorXd temp = vector;
+	return temp;
+}*/
+
+void Write(const IsingModel& self)
+{
+	py::scoped_ostream_redirect stream(
+		std::cout,
+		py::module::import("sys").attr("stdout")
+	);
+	py::print("Current spin configuration:");
+	py::print(self.GetSpins());
+	py::print("External magnetic field:");
+	py::print(self.GetExternalMagneticField());
+	py::print("Coupling coefficinets:");
+	py::print(self.GetCouplingCoefficients());
+	py::print("Algorithm:", self.AlgorithmToStr(self.GetCurrentAlgorithm()));
+	py::print("Temperature:", self.GetTemperature());
+	py::print("Pinning parameter:", self.GetPinningParameter());
+}
 
 PYBIND11_MODULE(simulatorWithCpp, m)
 {
@@ -20,7 +45,7 @@ PYBIND11_MODULE(simulatorWithCpp, m)
 		.def_property("PinningParameter", &IsingModel::GetPinningParameter, &IsingModel::SetPinningParameter)
 		.def_property_readonly("Spins", [](const IsingModel& self) -> std::map<Node, int> {
 			std::map<Node, int> temp;
-			for (auto pair : self.GetSpins())
+			for (auto pair : self.GetSpinsAsDictionary())
 				temp[pair.first] = pair.second;
 			return temp;
 		})
@@ -33,17 +58,12 @@ PYBIND11_MODULE(simulatorWithCpp, m)
 				self.SetSeed();
 		}, py::arg("seed") = std::nullopt)
 		.def("Update", &IsingModel::Update)
-		.def("Write", [](const IsingModel& self) {
-			py::scoped_ostream_redirect stream(
-				std::cout,
-				py::module::import("sys").attr("stdout")
-			);
-			self.Write();
-		});
+		.def("Write", &Write);
 	py::enum_<IsingModel::Algorithms>(m, "Algorithms")
 		.value("Metropolis", IsingModel::Algorithms::Metropolis)
 		.value("Glauber", IsingModel::Algorithms::Glauber)
 		.value("SCA", IsingModel::Algorithms::SCA)
+		.value("MA", IsingModel::Algorithms::MA)
 		.value("HillClimbing", IsingModel::Algorithms::HillClimbing)
 		.export_values();
 	py::enum_<IsingModel::ConfigurationsType>(m, "ConfigurationsType")

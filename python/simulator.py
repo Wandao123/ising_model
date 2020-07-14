@@ -13,6 +13,7 @@ class Algorithms(Enum):
     Metropolis = 'Metropolis method'
     Glauber = 'Glauber dynamics'
     SCA = 'Stochastic Cellular Automata'
+    MA = 'Momentum Annealing'
 
 class ConfigurationsType(Enum):
     AllDown = auto()
@@ -51,6 +52,7 @@ class IsingModel:
                     self.__couplingCoefficients[row][column] = self.__couplingCoefficients[column][row] = 0.e0
         self.Algorithm: Algorithms = Algorithms.Metropolis  # 使用する更新アルゴリズム。
         self.Parallelizing: bool = False  # SCAでPythonによる並列化をするか否かのフラグ。
+        self.__previousSpins: List[int] = self.__spins  # MA用。
 
     def __calcLocalMagneticFieldAt(self, nodeIndex: int) -> float:
         return self.__externalMagneticField[nodeIndex] + np.matmul(self.__couplingCoefficients, self.__spins)[nodeIndex]
@@ -97,6 +99,7 @@ class IsingModel:
             self.__spins = self.__rng.choice([-1, 1], self.__spins.size)
         else:
             raise ValueError('Illeagal choises')
+        self.__previousSpins = self.__spins
 
     def SetSeed(self, seed: Optional[int]=None):  # numpy.randomのドキュメントを見るに、int以外も渡せるようにするべき？
         self.__rng = np.random.default_rng(seed)
@@ -117,6 +120,7 @@ class IsingModel:
             else:
                 self.__spins[updatedNode] = -1
 
+        # あるいはProbabilistic Cellular Automata.
         def stochasticCellularAutomata():
             NumProcesses = 8
             spins = self.__spins
@@ -155,10 +159,23 @@ class IsingModel:
                 #    processesList.append(process)
                 #self.__spins = np.concatenate([queue.get() for i in range(NumProcesses)])
             else:
-                self.__spins = np.array([
-                    updateOneSpin(spins[nodeIndex], localMagneticField[nodeIndex])
-                    for nodeIndex in range(len(self.__nodeLabels))
-                ], dtype=np.int)
+                size = len(self.__nodeLabels)
+                self.__spins = np.sign(  # 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
+                    self.__externalMagneticField
+                    + np.matmul(self.__couplingCoefficients + np.identity(size) * self.__pinningParameter, self.__spins)
+                    - self.__temperature * self.__rng.logistic(size=size)
+                )
+
+        # 温度を下げなければ ``annealing'' ではないが、論文では区別していないので、ここでもこの名称を用いる。
+        def momentumAnnealing():
+            size = len(self.__nodeLabels)
+            temp = np.sign(  # 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
+                self.__externalMagneticField
+                + np.matmul(self.__couplingCoefficients + np.identity(size) * self.__pinningParameter, self.__spins)
+                - self.__temperature * (self.__rng.exponential(size=size) * self.__previousSpins)
+            )
+            self.__previousSpins = self.__spins
+            self.__spins = temp
 
         if self.Algorithm == Algorithms.Metropolis:
             metropolisMethod()
@@ -166,15 +183,18 @@ class IsingModel:
             glauberDynamics()
         elif self.Algorithm == Algorithms.SCA:
             stochasticCellularAutomata()
+        elif self.Algorithm == Algorithms.MA:
+            momentumAnnealing()
         else:
             raise ValueError('Illeagal choises')
 
     def Write(self):
         print('Current spin configuration:')
         print(self.__spins)
-        print()
         print('External magnetic field:')
         print(self.__externalMagneticField)
         print('Coupling coefficinets:')
         print(self.__couplingCoefficients)
         print('Algorithm:', self.Algorithm.value)
+        print('Temperature:', self.Temperature)
+        print('Pinning parameter:', self.PinningParameter)

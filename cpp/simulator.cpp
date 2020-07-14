@@ -89,7 +89,7 @@ void IsingModel::Update()
 
 	auto stochasticCellularAutomata = [this]() {
 		// アルゴリズム部分。
-		auto spins = this->spins;
+		/*auto spins = this->spins;
 		auto localMagneticField = calcLocalMagneticField(spins);
 		auto updateOneSpinForRangeOf = [this, &spins, &localMagneticField](int begin, int end) {
 			for (auto index = begin; index < end; index++) {
@@ -99,13 +99,30 @@ void IsingModel::Update()
 		};
 
 		// 並列処理部分。
-		const int NumThreads = 32;
+		const int NumThreads = 64;
 		std::vector<std::future<void>> tasks;
 		tasks.reserve(NumThreads - 1);
 		for (auto i = 0; i < NumThreads - 1; i++) {
 			tasks.emplace_back(std::async(std::launch::async, updateOneSpinForRangeOf, i * spins.size() / NumThreads, (i + 1) * spins.size() / NumThreads));
 		}
-		updateOneSpinForRangeOf((NumThreads - 1) * spins.size() / NumThreads, spins.size());
+		updateOneSpinForRangeOf((NumThreads - 1) * spins.size() / NumThreads, spins.size());*/
+		this->spins = (
+			externalMagneticField
+			+ (couplingCoefficients + Eigen::MatrixXd::Identity(couplingCoefficients.rows(), couplingCoefficients.cols()) * pinningParameter) * spins.cast<double>()
+			- temperature * Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double { return rand.Logistic(); })
+		).array().sign().cast<Spin>();  // 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
+	};
+
+	// 温度を下げなければ ``annealing'' ではないが、論文では区別していないので、ここでもこの名称を用いる。
+	auto momentumAnnealing = [this]() {
+		static Configuration previousSpins = Configuration::NullaryExpr(spins.size(), [this]() -> Spin { return rand.Bernoulli(0.5e0) ? Spin::Down : Spin::Up; });
+		Configuration temp = (
+			externalMagneticField
+			+ (couplingCoefficients + Eigen::MatrixXd::Identity(couplingCoefficients.rows(), couplingCoefficients.cols()) * pinningParameter) * spins.cast<double>()
+			- temperature * Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double { return rand.Exponential(); }).cwiseProduct(previousSpins.cast<double>())
+		).array().sign().cast<Spin>();  // 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
+		previousSpins = spins;
+		spins = temp;
 	};
 
 	auto hillClimbing = [this]() {
@@ -139,6 +156,9 @@ void IsingModel::Update()
 	case Algorithms::SCA:
 		stochasticCellularAutomata();
 		break;
+	case Algorithms::MA:
+		momentumAnnealing();
+		break;
 	case Algorithms::HillClimbing:
 		hillClimbing();
 		break;
@@ -152,10 +172,11 @@ void IsingModel::Write() const
 	std::cout << "Current spin configuration:" << std::endl;
 	for (auto i = 0; i < spins.size(); i++)
 		std::cout << std::setw(2) << spins(i);
-	std::cout << std::endl;
 	std::cout << "External magnetic field:" << std::endl;
 	std::cout << externalMagneticField.transpose() << std::endl;
 	std::cout << "Coupling coefficinets:" << std::endl;
 	std::cout << couplingCoefficients << std::endl;
 	std::cout << "Algorithm: " << AlgorithmToStr(algorithm) << std::endl;
+	std::cout << "Temperature: " << temperature << std::endl;
+	std::cout << "Pinning parameter: " << pinningParameter << std::endl;
 }
