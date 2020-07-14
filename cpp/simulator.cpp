@@ -88,24 +88,6 @@ void IsingModel::Update()
 	};
 
 	auto stochasticCellularAutomata = [this]() {
-		// アルゴリズム部分。
-		/*auto spins = this->spins;
-		auto localMagneticField = calcLocalMagneticField(spins);
-		auto updateOneSpinForRangeOf = [this, &spins, &localMagneticField](int begin, int end) {
-			for (auto index = begin; index < end; index++) {
-				if (rand.Bernoulli(1.e0 / (1.e0 + std::exp((static_cast<int>(spins(index)) * localMagneticField(index) + pinningParameter) / temperature))))
-					this->spins(index) = flip(spins(index));
-			}
-		};
-
-		// 並列処理部分。
-		const int NumThreads = 64;
-		std::vector<std::future<void>> tasks;
-		tasks.reserve(NumThreads - 1);
-		for (auto i = 0; i < NumThreads - 1; i++) {
-			tasks.emplace_back(std::async(std::launch::async, updateOneSpinForRangeOf, i * spins.size() / NumThreads, (i + 1) * spins.size() / NumThreads));
-		}
-		updateOneSpinForRangeOf((NumThreads - 1) * spins.size() / NumThreads, spins.size());*/
 		this->spins = (
 			externalMagneticField
 			+ (couplingCoefficients + Eigen::MatrixXd::Identity(couplingCoefficients.rows(), couplingCoefficients.cols()) * pinningParameter) * spins.cast<double>()

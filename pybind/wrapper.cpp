@@ -7,20 +7,9 @@
 #include <optional>
 
 namespace py = pybind11;
-/*using RowMajorVectorXd = Eigen::Matrix<double, Eigen::Dynamic, 1, Eigen::RowMajor>;
-
-RowMajorVectorXd ConvertToRowMajor(Eigen::VectorXd vector)
-{
-	RowMajorVectorXd temp = vector;
-	return temp;
-}*/
 
 void Write(const IsingModel& self)
 {
-	py::scoped_ostream_redirect stream(
-		std::cout,
-		py::module::import("sys").attr("stdout")
-	);
 	py::print("Current spin configuration:");
 	py::print(self.GetSpins());
 	py::print("External magnetic field:");

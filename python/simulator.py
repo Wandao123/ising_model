@@ -51,7 +51,6 @@ class IsingModel:
                 else:
                     self.__couplingCoefficients[row][column] = self.__couplingCoefficients[column][row] = 0.e0
         self.Algorithm: Algorithms = Algorithms.Metropolis  # 使用する更新アルゴリズム。
-        self.Parallelizing: bool = False  # SCAでPythonによる並列化をするか否かのフラグ。
         self.__previousSpins: List[int] = self.__spins  # MA用。
 
     def __calcLocalMagneticFieldAt(self, nodeIndex: int) -> float:
@@ -122,49 +121,12 @@ class IsingModel:
 
         # あるいはProbabilistic Cellular Automata.
         def stochasticCellularAutomata():
-            NumProcesses = 8
-            spins = self.__spins
-            localMagneticField = self.__calcLocalMagneticField(spins)
-
-            def updateOneSpin(updatedSpin: int, localMagneticFieldAt: float) -> int:
-                if self.__rng.random() <= 1.e0 / (1.e0 + np.exp((updatedSpin * localMagneticFieldAt + self.__pinningParameter) / self.__temperature)):
-                    return -updatedSpin
-                else:
-                    return updatedSpin
-
-            def updateSpinsFor(queue: mp.Queue, nodeIndicesArray: List[int]) -> List[int]:
-                result = np.empty(nodeIndicesArray.size, dtype=np.int)
-                print(nodeIndicesArray)
-                for i in range(result.size):
-                    if self.__rng.random() <= 1.e0 / (1.e0 + np.exp((spins[nodeIndicesArray[i]] * localMagneticField[nodeIndicesArray[i]] + self.__pinningParameter) / self.__temperature)):
-                        result[i] = -spins[nodeIndicesArray[i]]
-                    else:
-                        result[i] = spins[nodeIndicesArray[i]]
-                queue.put(result)
-                return result
-
-            # Warning: Python側で並列処理を実装しているものの、実際はNumpyに直接渡した方が速い。
-            if self.Parallelizing:
-                # multiprocess.Poolを使う方法。
-                with mp.Pool(processes=NumProcesses) as pool:
-                   self.__spins = np.array(pool.map(lambda nodeIndex: updateOneSpin(spins[nodeIndex], localMagneticField[nodeIndex]), range(len(self.__nodeLabels))))
-
-                # multiprocess.Processesを使う方法。
-                #queue = mp.Queue()
-                #splitNodeIndicesArray = np.array_split(np.arange(len(self.__nodeLabels)), NumProcesses)  # 各プロセスへパメータの組を適当に振り分ける。
-                #processesList = []
-                #for i in range(NumProcesses):
-                #    process = mp.Process(target=updateSpinsFor, args=(queue, splitNodeIndicesArray[i]))
-                #    process.start()
-                #    processesList.append(process)
-                #self.__spins = np.concatenate([queue.get() for i in range(NumProcesses)])
-            else:
-                size = len(self.__nodeLabels)
-                self.__spins = np.sign(  # 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
-                    self.__externalMagneticField
-                    + np.matmul(self.__couplingCoefficients + np.identity(size) * self.__pinningParameter, self.__spins)
-                    - self.__temperature * self.__rng.logistic(size=size)
-                )
+            size = len(self.__nodeLabels)
+            self.__spins = np.sign(  # 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
+                self.__externalMagneticField
+                + np.matmul(self.__couplingCoefficients + np.identity(size) * self.__pinningParameter, self.__spins)
+                - self.__temperature * self.__rng.logistic(size=size)
+            )
 
         # 温度を下げなければ ``annealing'' ではないが、論文では区別していないので、ここでもこの名称を用いる。
         def momentumAnnealing():
