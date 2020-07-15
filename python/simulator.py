@@ -4,7 +4,6 @@ __author__ = 'Wandao123'
 __date__ = '2020/6/21'
 
 from enum import Enum, auto
-import multiprocess as mp  # 標準ライブラリと異なることに注意。
 import numpy as np
 import numpy.linalg as LA
 from typing import Dict, List, Optional, Tuple, Union  # TypeVarとUnionのどちらが良いのか？　ラベルの型を混ぜられるようにするためにUnionを使う？
