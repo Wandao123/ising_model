@@ -344,6 +344,7 @@ main
 *.o
 *.d
 *.dat
+data/
 /python/env/
 /python/env-linux
 *.dll
