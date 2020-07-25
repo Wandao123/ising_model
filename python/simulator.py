@@ -50,7 +50,7 @@ class IsingModel:
                 else:
                     self.__couplingCoefficients[row][column] = self.__couplingCoefficients[column][row] = 0.e0
         self.Algorithm: Algorithms = Algorithms.Metropolis  # 使用する更新アルゴリズム。
-        self.__previousSpins: List[int] = self.__spins  # MA用。
+        self.__previousSpins: List[int] = self.__spins
 
     def __calcLocalMagneticFieldAt(self, nodeIndex: int) -> float:
         return self.__externalMagneticField[nodeIndex] + np.matmul(self.__couplingCoefficients, self.__spins)[nodeIndex]
@@ -82,8 +82,26 @@ class IsingModel:
 
     @property
     def Energy(self) -> float:
-        # Remove double-counting duplicates by multiplying the sum by 1/2.
-        return np.matmul(-self.__spins, 0.5e0 * np.matmul(self.__couplingCoefficients, self.__spins) + self.__externalMagneticField)
+        def hamiltonian() -> float:
+            # Remove double-counting duplicates by multiplying the sum by 1/2.
+            return -0.5e0 * np.matmul(self.__spins, np.matmul(self.__couplingCoefficients, self.__spins))\
+                - np.inner(self.__spins, self.__externalMagneticField)
+
+        def hamiltonianOnBipartiteGraph() -> float:
+            return -0.5e0 * np.matmul(self.__spins, np.matmul(self.__couplingCoefficients, self.__previousSpins))\
+                - 0.5e0 * np.inner(self.__spins + self.__previousSpins, self.__externalMagneticField)\
+                + 0.5e0 * self.__pinningParameter * (self.__spins.size - np.inner(self.__spins, self.__previousSpins))
+
+        if self.Algorithm == Algorithms.Metropolis:
+            return hamiltonian()
+        elif self.Algorithm == Algorithms.Glauber:
+            return hamiltonian()
+        elif self.Algorithm == Algorithms.SCA:
+            return hamiltonianOnBipartiteGraph()
+        elif self.Algorithm == Algorithms.MA:
+            return hamiltonianOnBipartiteGraph()
+        else:
+            raise ValueError('Illeagal choises')
 
     def CalcLargestEigenvalue(self) -> float:
         return np.amax(LA.eigvalsh(-self.__couplingCoefficients))
@@ -121,6 +139,7 @@ class IsingModel:
         # あるいはProbabilistic Cellular Automata.
         def stochasticCellularAutomata():
             size = len(self.__nodeLabels)
+            self.__previousSpins = self.__spins
             self.__spins = np.sign(  # 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
                 self.__externalMagneticField
                 + np.matmul(self.__couplingCoefficients + np.identity(size) * self.__pinningParameter, self.__spins)

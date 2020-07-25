@@ -38,7 +38,8 @@ def GenerateSquareLatticeEdges(maxNodes: int) -> Dict[Tuple[int, int], float]:
 
 def Initialize() -> simulator.IsingModel:
     # Create a simulator.IsingModel instance.
-    quadratic = GenerateErdosRenyiEdges(MaxNodes, Probability)
+    #quadratic = GenerateErdosRenyiEdges(MaxNodes, Probability)
+    quadratic = GenerateSquareLatticeEdges(MaxNodes)
     isingModel = simulator.IsingModel({}, quadratic)
     isingModel.Algorithm = simulator.Algorithms.MA
 

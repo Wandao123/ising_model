@@ -22,6 +22,7 @@ IsingModel::IsingModel(const LinearBiases linear, const QuadraticBiases quadrati
 	// Hamiltonianの定数と変数を初期化。
 	auto maxNodes = nodeLabels.size();
 	spins.setConstant(maxNodes, Spin::Up);
+	previousSpins = spins;
 	externalMagneticField.resize(maxNodes);
 	for (auto i = 0; i < maxNodes; i++) {
 		auto iter = linear.find(nodeLabels[i]);
@@ -49,6 +50,33 @@ double IsingModel::CalcLargestEigenvalue() const
 	return solver.eigenvalues().reverse()(0);
 }
 
+double IsingModel::GetEnergy() const
+{
+	auto hamiltonian = [this]() -> double {
+		// Remove double-counting duplicates by multiplying the sum by 1/2.
+		return -spins.cast<double>().transpose() * (0.5e0 * couplingCoefficients * spins.cast<double>() + externalMagneticField);
+	};
+
+	auto hamiltonianOnBipartiteGraph = [this]() -> double {
+		return -0.5e0 * spins.cast<double>().transpose() * couplingCoefficients * spins.cast<double>()
+			- 0.5e0 * externalMagneticField.dot(spins.cast<double>() + previousSpins.cast<double>())
+			+ 0.5e0 * pinningParameter * (spins.size() - spins.cast<double>().dot(previousSpins.cast<double>()));
+	};
+
+	switch (algorithm) {
+	case Algorithms::Metropolis:
+	case Algorithms::Glauber:
+	case Algorithms::HillClimbing:
+		return hamiltonian();
+	case Algorithms::SCA:
+	case Algorithms::MA:
+		return hamiltonianOnBipartiteGraph();
+	default:
+		return std::nan("");
+		break;
+	}
+}
+
 void IsingModel::GiveSpins(const ConfigurationsType configurationType)
 {
 	switch (configurationType) {
@@ -65,9 +93,9 @@ void IsingModel::GiveSpins(const ConfigurationsType configurationType)
 	default:
 		break;
 	}
+	previousSpins = spins;
 }
 
-// Hamiltonian: H(s) = - sum_<x,y> J_{xy} s_x s_y - sum_x h_x s_x
 void IsingModel::Update()
 {
 	auto metropolisMethod = [this]() {
@@ -88,19 +116,17 @@ void IsingModel::Update()
 	};
 
 	auto stochasticCellularAutomata = [this]() {
-		this->spins = (
-			externalMagneticField
-			+ (couplingCoefficients + Eigen::MatrixXd::Identity(couplingCoefficients.rows(), couplingCoefficients.cols()) * pinningParameter) * spins.cast<double>()
+		previousSpins = spins;
+		spins = (
+			calcLocalMagneticField(spins) + pinningParameter * spins.cast<double>()
 			- temperature * Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double { return rand.Logistic(); })
 		).array().sign().cast<Spin>();  // 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
 	};
 
 	// 温度を下げなければ ``annealing'' ではないが、論文では区別していないので、ここでもこの名称を用いる。
 	auto momentumAnnealing = [this]() {
-		static Configuration previousSpins = Configuration::NullaryExpr(spins.size(), [this]() -> Spin { return rand.Bernoulli(0.5e0) ? Spin::Down : Spin::Up; });
 		Configuration temp = (
-			externalMagneticField
-			+ (couplingCoefficients + Eigen::MatrixXd::Identity(couplingCoefficients.rows(), couplingCoefficients.cols()) * pinningParameter) * spins.cast<double>()
+			calcLocalMagneticField(spins) + pinningParameter * spins.cast<double>()
 			- temperature * Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double { return rand.Exponential(); }).cwiseProduct(previousSpins.cast<double>())
 		).array().sign().cast<Spin>();  // 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
 		previousSpins = spins;

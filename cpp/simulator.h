@@ -101,6 +101,7 @@ public:
 
 	IsingModel(const LinearBiases linear, const QuadraticBiases quadratic);
 	double CalcLargestEigenvalue() const;
+	double GetEnergy() const;
 	void GiveSpins(const ConfigurationsType configurationType);
 	void Update();
 	void Write() const;
@@ -141,12 +142,6 @@ public:
 	void ChangeAlgorithmTo(const Algorithms algorithm)
 	{
 		this->algorithm = algorithm;
-	}
-
-	double GetEnergy() const
-	{
-		// Remove double-counting duplicates by multiplying the sum by 1/2.
-		return -spins.cast<double>().transpose() * (0.5e0 * couplingCoefficients * spins.cast<double>() + externalMagneticField);
 	}
 
 	double GetTemperature() const
@@ -198,6 +193,7 @@ private:
 	double pinningParameter = 0.e0;   // An parameter for the PCA.
 	std::vector<Node> nodeLabels;
 	Configuration spins;
+	Configuration previousSpins;
 	Eigen::VectorXd externalMagneticField;
 	Eigen::MatrixXd couplingCoefficients;
 	Algorithms algorithm = Algorithms::Metropolis;
