@@ -44,8 +44,13 @@ def Initialize() -> simulator.IsingModel:
     isingModel.Algorithm = simulator.Algorithms.MA
 
     # Preprocess IsingModel's spin configuration and parameters.
-    isingModel.SetSeed(1024)  # Always use the same initial configuration.
-    isingModel.GiveSpins(simulator.ConfigurationsType.Uniform)
+    #isingModel.SetSeed(1024)  # Always use the same initial configuration.
+    #isingModel.GiveSpins(simulator.ConfigurationsType.Uniform)
+    spins = isingModel.Spins
+    rng = np.random.default_rng(1024)
+    for node in spins:
+        spins[node] = rng.choice([-1, +1])
+    isingModel.Spins = spins
     isingModel.SetSeed()
     if isingModel.Algorithm == simulator.Algorithms.SCA or isingModel.Algorithm == simulator.Algorithms.MA:
         isingModel.PinningParameter = isingModel.CalcLargestEigenvalue() / 2

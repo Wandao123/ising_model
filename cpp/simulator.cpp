@@ -17,28 +17,32 @@ IsingModel::IsingModel(const LinearBiases linear, const QuadraticBiases quadrati
 		nodes.insert(iter->first.first);
 		nodes.insert(iter->first.second);
 	}
-	nodeLabels = std::vector<Node>(nodes.begin(), nodes.end());
+	std::size_t index = 0;
+	for (const auto& key : nodes)
+		nodeIndices[key] = index++;
 
 	// Hamiltonianの定数と変数を初期化。
-	auto maxNodes = nodeLabels.size();
+	auto maxNodes = nodeIndices.size();
 	spins.setConstant(maxNodes, Spin::Up);
 	previousSpins = spins;
 	externalMagneticField.resize(maxNodes);
-	for (auto i = 0; i < maxNodes; i++) {
-		auto iter = linear.find(nodeLabels[i]);
+	for (const auto& node : nodeIndices) {
+		auto iter = linear.find(node.first);
 		if (iter != linear.end())
-			externalMagneticField(i) = iter->second;
+			externalMagneticField(node.second) = iter->second;
 		else
-			externalMagneticField(i) = 0.e0;
+			externalMagneticField(node.second) = 0.e0;
 	}
 	couplingCoefficients = Eigen::MatrixXd::Zero(maxNodes, maxNodes);
-	for (auto i = 0; i < maxNodes; i++) {
-		for (auto j = i + 1; j < maxNodes; j++) {
-			auto iter = quadratic.find(std::make_pair(nodeLabels[i], nodeLabels[j]));
+	for (const auto& row : nodeIndices) {
+		for (const auto& column : nodeIndices) {
+			if (row.first > column.first)
+				continue;
+			auto iter = quadratic.find(std::make_pair(row.first, column.first));
 			if (iter != quadratic.end())
-				couplingCoefficients(i, j) = couplingCoefficients(j, i) = iter->second;
+				couplingCoefficients(row.second, column.second) = couplingCoefficients(column.second, row.second) = iter->second;
 			else
-				couplingCoefficients(i, j) = couplingCoefficients(j, i) = 0.e0;
+				couplingCoefficients(row.second, column.second) = couplingCoefficients(column.second, row.second) = 0.e0;
 		}
 	}
 }
@@ -179,7 +183,7 @@ void IsingModel::Write() const
 {
 	std::cout << "Current spin configuration:" << std::endl;
 	for (auto i = 0; i < spins.size(); i++)
-		std::cout << std::setw(2) << spins(i);
+		std::cout << std::setw(2) << static_cast<int>(spins(i));
 	std::cout << "External magnetic field:" << std::endl;
 	std::cout << externalMagneticField.transpose() << std::endl;
 	std::cout << "Coupling coefficinets:" << std::endl;

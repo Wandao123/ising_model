@@ -69,6 +69,20 @@ public:
 		std::uniform_real_distribution<double> distr(0.e0, 1.e0);
 		return distr(mt);
 	}
+
+	template<typename T>
+	std::vector<T> Choice(const std::vector<T> population, const std::uint_fast64_t distance)
+	{
+		std::vector<T> result;
+		std::sample(population.begin(), population.end(), std::back_inserter(result), distance, mt);
+		return result;
+	}
+
+	template<typename T>
+	T Choice(const std::vector<T> population)
+	{
+		return Choice(population, 1)[0];
+	}
 private:
 	std::random_device rd;
 	std::mt19937_64 mt;
@@ -81,7 +95,7 @@ using QuadraticBiases = std::map<Edge, double>;
 
 class IsingModel {
 public:
-	enum Spin : int {  // ライブラリ側でも型変換できるように、enum classではなくenumを使う。
+	enum class Spin : int {  // ライブラリ側でも型変換できるように、enum classではなくenumを使う。
 		Down = -1,
 		Up = +1
 	};
@@ -167,9 +181,15 @@ public:
 	std::map<Node, Spin> GetSpinsAsDictionary() const
 	{
 		std::map<Node, Spin> result;
-		for (auto i = 0; i < nodeLabels.size(); i++)
-			result[nodeLabels[i]] = spins[i];
+		for (const auto& node : nodeIndices)
+			result[node.first] = spins[node.second];
 		return result;
+	}
+
+	void SetSpinsAsDictionary(const std::map<Node, Spin> spins)
+	{
+		for (const auto& spin : spins)
+			this->spins[nodeIndices[spin.first]] = spin.second;
 	}
 
 	Eigen::VectorXi GetSpins() const
@@ -191,7 +211,7 @@ private:
 
 	double temperature = 0.e0;        // Including the Boltzmann constant: k_B T.
 	double pinningParameter = 0.e0;   // An parameter for the PCA.
-	std::vector<Node> nodeLabels;
+	std::map<Node, std::size_t> nodeIndices;
 	Configuration spins;
 	Configuration previousSpins;
 	Eigen::VectorXd externalMagneticField;

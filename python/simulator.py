@@ -32,23 +32,25 @@ class IsingModel:
         self.__rng: np.random.Generator = np.random.default_rng()
         self.__temperature: float = 0  # 温度パラメータ。
         self.__pinningParameter: float = 0  # SCAのpinning parameter.
-        self.__nodeLabels: List[NodeName] = [  # __spinsの添字と頂点の名前との対応。
-            node
-            for node in {n for pair in quadratic.keys() for n in pair}.union(linear.keys())
-        ]
-        self.__spins: List[int] = np.ones(len(self.__nodeLabels), dtype=np.int8)
+        self.__nodeIndices: Dict[NodeName, int] = {  # 頂点の名前と__spinsの添字との対応。
+            node: index
+            for index, node in enumerate({n for pair in quadratic for n in pair}.union(linear.keys()))
+        }
+        self.__spins: List[int] = np.ones(len(self.__nodeIndices), dtype=np.int8)
         self.__externalMagneticField: List[float] = np.array([  # 外部磁場の強さ。
-            linear[self.__nodeLabels[index]]
-            if self.__nodeLabels[index] in linear else 0
-            for index in range(len(self.__nodeLabels))
+            linear[node]
+            if node in linear else 0
+            for node in self.__nodeIndices
         ], dtype=np.float)
-        self.__couplingCoefficients: List[List[float]] = np.zeros((len(self.__nodeLabels),)*2, dtype=np.float)  # スピン同士の結合定数（対角成分が0の対称行列）。
-        for row in range(len(self.__nodeLabels)):
-            for column in range(row, len(self.__nodeLabels)):
-                if (self.__nodeLabels[row], self.__nodeLabels[column]) in quadratic:
-                    self.__couplingCoefficients[row][column] = self.__couplingCoefficients[column][row] = quadratic[(self.__nodeLabels[row], self.__nodeLabels[column])]
+        self.__couplingCoefficients: List[List[float]] = np.zeros((len(self.__nodeIndices),)*2, dtype=np.float)  # スピン同士の結合定数（対角成分が0の対称行列）。
+        for row, i in self.__nodeIndices.items():
+            for column, j in self.__nodeIndices.items():
+                if row > column:  # quadraticのキーに x > y なる (x, y) が指定されていても無視。
+                    continue
+                if (row, column) in quadratic:
+                    self.__couplingCoefficients[i][j] = self.__couplingCoefficients[j][i] = quadratic[(row, column)]
                 else:
-                    self.__couplingCoefficients[row][column] = self.__couplingCoefficients[column][row] = 0.e0
+                    self.__couplingCoefficients[i][j] = self.__couplingCoefficients[j][i] = 0.e0
         self.Algorithm: Algorithms = Algorithms.Metropolis  # 使用する更新アルゴリズム。
         self.__previousSpins: List[int] = self.__spins
 
@@ -62,7 +64,13 @@ class IsingModel:
 
     @property
     def Spins(self) -> Dict[NodeName, int]:
-        return {node: self.__spins[i] for i, node in enumerate(self.__nodeLabels)}
+        return {key: self.__spins[value] for key, value in self.__nodeIndices.items()}
+
+    @Spins.setter
+    def Spins(self, spins: Dict[NodeName, int]):
+        for key, value in spins.items():
+            if value in [-1, +1]:
+                self.__spins[self.__nodeIndices[key]] = value
 
     @property
     def Temperature(self) -> float:
@@ -108,7 +116,7 @@ class IsingModel:
         elif confType == ConfigurationsType.AllUp:
             self.__spins = np.ones(self.__spins.size)
         elif confType == ConfigurationsType.Uniform:
-            self.__spins = self.__rng.choice([-1, 1], self.__spins.size)
+            self.__spins = self.__rng.choice([-1, +1], self.__spins.size)
         else:
             raise ValueError('Illeagal choises')
         self.__previousSpins = self.__spins
@@ -134,7 +142,7 @@ class IsingModel:
 
         # あるいはProbabilistic Cellular Automata.
         def stochasticCellularAutomata():
-            size = len(self.__nodeLabels)
+            size = len(self.__spins)
             self.__previousSpins = self.__spins
             self.__spins = np.sign(  # 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
                 self.__externalMagneticField
@@ -144,7 +152,7 @@ class IsingModel:
 
         # 温度を下げなければ ``annealing'' ではないが、論文では区別していないので、ここでもこの名称を用いる。
         def momentumAnnealing():
-            size = len(self.__nodeLabels)
+            size = len(self.__spins)
             temp = np.sign(  # 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
                 self.__externalMagneticField
                 + np.matmul(self.__couplingCoefficients + np.identity(size) * self.__pinningParameter, self.__spins)

@@ -32,12 +32,23 @@ PYBIND11_MODULE(simulatorWithCpp, m)
 		.def_property_readonly("Energy", &IsingModel::GetEnergy)
 		.def_property("Temperature", &IsingModel::GetTemperature, &IsingModel::SetTemperature)
 		.def_property("PinningParameter", &IsingModel::GetPinningParameter, &IsingModel::SetPinningParameter)
-		.def_property_readonly("Spins", [](const IsingModel& self) -> std::map<Node, int> {
-			std::map<Node, int> temp;
-			for (auto pair : self.GetSpinsAsDictionary())
-				temp[pair.first] = pair.second;
-			return temp;
-		})
+		.def_property("Spins",
+			[](const IsingModel& self) -> std::map<Node, int> {
+				std::map<Node, int> temp;
+				for (const auto& pair : self.GetSpinsAsDictionary())
+					temp[pair.first] = static_cast<int>(pair.second);
+				return temp;
+			},
+			[](IsingModel& self, const std::map<Node, int> spins) {
+				std::map<Node, IsingModel::Spin> temp;
+				for (const auto& pair : spins)
+					if (pair.second == -1 || pair.second == +1)
+						temp[pair.first] = static_cast<IsingModel::Spin>(pair.second);
+					else
+						throw "Error: unable to convert " + std::to_string(pair.second);
+				self.SetSpinsAsDictionary(temp);
+			}
+		)
 		.def("CalcLargestEigenvalue", &IsingModel::CalcLargestEigenvalue)
 		.def("GiveSpins", &IsingModel::GiveSpins)
 		.def("SetSeed", [](IsingModel& self, const std::optional<unsigned int> seed = std::nullopt) {

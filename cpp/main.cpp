@@ -46,7 +46,7 @@ void printStatus(const IsingModel& isingModel)
     std::cout << "Energy = " << isingModel.GetEnergy() << std::endl;
     std::cout << "{ ";
     for (auto spin : isingModel.GetSpinsAsDictionary())
-        std::cout << "{" << std::get<int>(spin.first) << ": " << spin.second << "}, ";
+        std::cout << "{" << std::get<int>(spin.first) << ": " << static_cast<int>(spin.second) << "}, ";
     std::cout << "}\n" << std::endl;
     isingModel.Write();
 }
@@ -70,9 +70,15 @@ int main()
         [](double acc, const QuadraticBiases::value_type& p) -> double { return acc + std::abs(p.second); }
     ) + isingModel.GetPinningParameter();
     isingModel.SetTemperature(initialTemperature);
-    isingModel.SetSeed(Seed * 2);
-    isingModel.GiveSpins(IsingModel::ConfigurationsType::Uniform);
-    isingModel.SetSeed();  // SCAのときには並列処理をするためか、seedを指定しても固定されない。
+    //isingModel.SetSeed(Seed * 2);
+    //isingModel.GiveSpins(IsingModel::ConfigurationsType::Uniform);
+    auto spins = isingModel.GetSpinsAsDictionary();
+    Rand rand;
+    rand.Seed(Seed * 2);
+    for (auto& spin : spins)
+        spin.second = rand.Choice(std::vector<IsingModel::Spin>{ IsingModel::Spin::Down, IsingModel::Spin::Up });
+    isingModel.SetSpinsAsDictionary(spins);
+    isingModel.SetSeed();
 
     /*auto time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::stringstream ss;
