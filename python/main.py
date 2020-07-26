@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from typing import Dict, List, Tuple
 
-#import simulator
-import simulatorWithCpp as simulator
+import simulator
+#import simulatorWithCpp as simulator
 
 MaxTrials = int(1.e3)
 MaxNodes = 256

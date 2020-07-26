@@ -92,13 +92,9 @@ class IsingModel:
                 - 0.5e0 * np.inner(self.__spins + self.__previousSpins, self.__externalMagneticField)\
                 + 0.5e0 * self.__pinningParameter * (self.__spins.size - np.inner(self.__spins, self.__previousSpins))
 
-        if self.Algorithm == Algorithms.Metropolis:
+        if self.Algorithm == Algorithms.Metropolis or self.Algorithm == Algorithms.Glauber:
             return hamiltonian()
-        elif self.Algorithm == Algorithms.Glauber:
-            return hamiltonian()
-        elif self.Algorithm == Algorithms.SCA:
-            return hamiltonianOnBipartiteGraph()
-        elif self.Algorithm == Algorithms.MA:
+        elif self.Algorithm == Algorithms.SCA or self.Algorithm == Algorithms.MA:
             return hamiltonianOnBipartiteGraph()
         else:
             raise ValueError('Illeagal choises')
