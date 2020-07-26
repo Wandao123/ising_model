@@ -8,6 +8,10 @@
 
 // quadraticのキーのペア (i, j) は順番が i < j となっていなければならない。
 IsingModel::IsingModel(const LinearBiases linear, const QuadraticBiases quadratic)
+	: rand(std::make_unique<Rand>())
+	, temperature(0.e0)
+	, pinningParameter(0.e0)
+	, algorithm(Algorithms::Metropolis)
 {
 	// spinsの添字と頂点の名前との対応表を作成。
 	std::set<Node> nodes;
@@ -92,7 +96,7 @@ void IsingModel::GiveSpins(const ConfigurationsType configurationType)
 		break;
 	case ConfigurationsType::Uniform:
 		for (auto i = 0; i < spins.size(); i++)
-			spins(i) = rand.Bernoulli(0.5e0) ? Spin::Down : Spin::Up;
+			spins(i) = rand->Bernoulli(0.5e0) ? Spin::Down : Spin::Up;
 		break;
 	default:
 		break;
@@ -103,17 +107,17 @@ void IsingModel::GiveSpins(const ConfigurationsType configurationType)
 void IsingModel::Update()
 {
 	auto metropolisMethod = [this]() {
-		unsigned int updatedNodeIndex = rand(spins.size());
+		unsigned int updatedNodeIndex = (*rand)(spins.size());
 		double energyDifference = 2.e0 * static_cast<int>(spins(updatedNodeIndex)) * calcLocalMagneticField(updatedNodeIndex);
 		if (energyDifference < 0.e0)
 			spins(updatedNodeIndex) = flip(spins(updatedNodeIndex));
-		else if (rand.Bernoulli(std::exp(-energyDifference / temperature)))
+		else if (rand->Bernoulli(std::exp(-energyDifference / temperature)))
 			spins(updatedNodeIndex) = flip(spins(updatedNodeIndex));
 	};
 
 	auto glauberDynamics = [this]() {
-		unsigned int updatedNodeIndex = rand(spins.size());
-		if (rand.Bernoulli(1.e0 / (1.e0 + std::exp(-2.e0 * calcLocalMagneticField(updatedNodeIndex) / temperature))))
+		unsigned int updatedNodeIndex = (*rand)(spins.size());
+		if (rand->Bernoulli(1.e0 / (1.e0 + std::exp(-2.e0 * calcLocalMagneticField(updatedNodeIndex) / temperature))))
 			spins(updatedNodeIndex) = Spin::Up;
 		else
 			spins(updatedNodeIndex) = Spin::Down;
@@ -123,7 +127,7 @@ void IsingModel::Update()
 		previousSpins = spins;
 		spins = (
 			calcLocalMagneticField(spins) + pinningParameter * spins.cast<double>()
-			- temperature * Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double { return rand.Logistic(); })
+			- temperature * Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double { return rand->Logistic(); })
 		).array().sign().cast<Spin>();  // 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
 	};
 
@@ -131,7 +135,7 @@ void IsingModel::Update()
 	auto momentumAnnealing = [this]() {
 		Configuration temp = (
 			calcLocalMagneticField(spins) + pinningParameter * spins.cast<double>()
-			- temperature * Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double { return rand.Exponential(); }).cwiseProduct(previousSpins.cast<double>())
+			- temperature * Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double { return rand->Exponential(); }).cwiseProduct(previousSpins.cast<double>())
 		).array().sign().cast<Spin>();  // 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
 		previousSpins = spins;
 		spins = temp;

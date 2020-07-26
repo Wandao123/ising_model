@@ -140,12 +140,13 @@ public:
 
 	void SetSeed()
 	{
-		rand.Seed();
+		rand = std::make_unique<Rand>();
 	}
 
 	void SetSeed(const unsigned int seed)
 	{
-		rand.Seed(seed);
+		SetSeed();
+		rand->Seed(seed);
 	}
 
 	Algorithms GetCurrentAlgorithm() const
@@ -209,15 +210,15 @@ public:
 private:
 	using Configuration = Eigen::Matrix<Spin, Eigen::Dynamic, 1>;
 
-	double temperature = 0.e0;        // Including the Boltzmann constant: k_B T.
-	double pinningParameter = 0.e0;   // An parameter for the PCA.
+	std::unique_ptr<Rand> rand;
+	double temperature;        // Including the Boltzmann constant: k_B T.
+	double pinningParameter;   // An parameter for the PCA.
+	Algorithms algorithm;
 	std::map<Node, std::size_t> nodeIndices;
 	Configuration spins;
 	Configuration previousSpins;
 	Eigen::VectorXd externalMagneticField;
 	Eigen::MatrixXd couplingCoefficients;
-	Algorithms algorithm = Algorithms::Metropolis;
-	Rand rand;
 
 	double calcLocalMagneticField(const unsigned int nodeIndex) const
 	{
