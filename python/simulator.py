@@ -13,6 +13,7 @@ class Algorithms(Enum):
     Glauber = 'Glauber dynamics'
     SCA = 'Stochastic Cellular Automata'
     MA = 'Momentum Annealing'
+    MMA = 'Modified Momentum Annealing'
 
 class ConfigurationsType(Enum):
     AllDown = auto()
@@ -102,7 +103,7 @@ class IsingModel:
 
         if self.Algorithm == Algorithms.Metropolis or self.Algorithm == Algorithms.Glauber:
             return hamiltonian()
-        elif self.Algorithm == Algorithms.SCA or self.Algorithm == Algorithms.MA:
+        elif self.Algorithm == Algorithms.SCA or self.Algorithm == Algorithms.MA or self.Algorithm.MMA:
             return hamiltonianOnBipartiteGraph()
         else:
             raise ValueError('Illeagal choises')
@@ -145,8 +146,7 @@ class IsingModel:
             size = len(self.__spins)
             self.__previousSpins = self.__spins
             self.__spins = np.sign(  # 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
-                self.__externalMagneticField
-                + np.matmul(self.__couplingCoefficients + np.identity(size) * self.__pinningParameter, self.__spins)
+                self.__calcLocalMagneticField(self.__spins) + self.__pinningParameter * self.__spins
                 - self.__temperature * self.__rng.logistic(size=size)
             )
 
@@ -154,12 +154,19 @@ class IsingModel:
         def momentumAnnealing():
             size = len(self.__spins)
             temp = np.sign(  # 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
-                self.__externalMagneticField
-                + np.matmul(self.__couplingCoefficients + np.identity(size) * self.__pinningParameter, self.__spins)
+                self.__calcLocalMagneticField(self.__spins) + self.__pinningParameter * self.__spins
                 - self.__temperature * (self.__rng.exponential(size=size) * self.__previousSpins)
             )
             self.__previousSpins = self.__spins
             self.__spins = temp
+
+        def modifiedMomentumAnnealing():
+            size = len(self.__spins)
+            self.__previousSpins = self.__spins
+            self.__spins = np.sign(  # 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
+                self.__calcLocalMagneticField(self.__spins) + self.__pinningParameter * self.__spins
+                - self.__temperature * (self.__rng.exponential(size=size) * self.__spins)
+            )
 
         if self.Algorithm == Algorithms.Metropolis:
             metropolisMethod()
@@ -169,6 +176,8 @@ class IsingModel:
             stochasticCellularAutomata()
         elif self.Algorithm == Algorithms.MA:
             momentumAnnealing()
+        elif self.Algorithm == Algorithms.MMA:
+            modifiedMomentumAnnealing()
         else:
             raise ValueError('Illeagal choises')
 

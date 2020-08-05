@@ -104,6 +104,7 @@ public:
 		Glauber,
 		SCA,
 		MA,
+		MMA,
 		HillClimbing,
 		SIZE
 	};
@@ -131,6 +132,8 @@ public:
 			return { "Stochastic cellular automata" };
 		case Algorithms::MA:
 			return { "Momentum annealing" };
+		case Algorithms::MMA:
+			return { "Modified momentum annealing" };
 		case Algorithms::HillClimbing:
 			return { "Hill climbing" };
 		default:

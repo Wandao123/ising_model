@@ -64,6 +64,7 @@ PYBIND11_MODULE(simulatorWithCpp, m)
 		.value("Glauber", IsingModel::Algorithms::Glauber)
 		.value("SCA", IsingModel::Algorithms::SCA)
 		.value("MA", IsingModel::Algorithms::MA)
+		.value("MMA", IsingModel::Algorithms::MMA)
 		.value("HillClimbing", IsingModel::Algorithms::HillClimbing)
 		.export_values();
 	py::enum_<IsingModel::ConfigurationsType>(m, "ConfigurationsType")

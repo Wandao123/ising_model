@@ -78,6 +78,7 @@ double IsingModel::GetEnergy() const
 		return hamiltonian();
 	case Algorithms::SCA:
 	case Algorithms::MA:
+	case Algorithms::MMA:
 		return hamiltonianOnBipartiteGraph();
 	default:
 		return std::nan("");
@@ -141,6 +142,14 @@ void IsingModel::Update()
 		spins = temp;
 	};
 
+	auto modifiedMomentumAnnealing = [this]() {
+		previousSpins = spins;
+		spins = (
+			calcLocalMagneticField(spins) + pinningParameter * spins.cast<double>()
+			- temperature * Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double { return rand->Exponential(); }).cwiseProduct(spins.cast<double>())
+		).array().sign().cast<Spin>();  // 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
+	};
+
 	auto hillClimbing = [this]() {
 		Configuration currentConfiguration = spins;
 		while (true) {
@@ -174,6 +183,9 @@ void IsingModel::Update()
 		break;
 	case Algorithms::MA:
 		momentumAnnealing();
+		break;
+	case Algorithms::MMA:
+		modifiedMomentumAnnealing();
 		break;
 	case Algorithms::HillClimbing:
 		hillClimbing();
