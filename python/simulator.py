@@ -12,6 +12,7 @@ class Algorithms(Enum):
     Metropolis = 'Metropolis method'
     Glauber = 'Glauber dynamics'
     SCA = 'Stochastic Cellular Automata'
+    fcSCA = 'Flip-Constrained Stochastic Cellular Automata'
     MA = 'Momentum Annealing'
     MMA = 'Modified Momentum Annealing'
 
@@ -31,8 +32,9 @@ class IsingModel:
     """An Ising model simulator"""
     def __init__(self, linear: Dict[NodeName, float], quadratic: Dict[Tuple[NodeName, NodeName], float]):
         self.__rng: np.random.Generator = np.random.default_rng()
-        self.__temperature: float = 0  # 温度パラメータ。
-        self.__pinningParameter: float = 0  # SCAのpinning parameter.
+        self.__temperature: float = 0  # Temperature parameter.
+        self.__pinningParameter: float = 0  # Pinning parameter of SCA.
+        self.__flipTrialRate: float = 0  # Flip trial rate of flip-constained SCA.
         self.__nodeIndices: Dict[NodeName, int] = {  # 頂点の名前と__spinsの添字との対応。
             node: index
             for index, node in enumerate({n for pair in quadratic for n in pair}.union(linear.keys()))
@@ -90,6 +92,14 @@ class IsingModel:
         self.__pinningParameter = max(pinningParameter, 0.e0)  # 強制的に非負実数にする。
 
     @property
+    def FlipTrialRate(self) -> float:
+        return self.__flipTrialRate
+
+    @FlipTrialRate.setter
+    def FlipTrialRate(self, flipTrialRate: float):
+        self.__flipTrialRate = min(max(flipTrialRate, 0.e0), 1.e0)  # Strict into the interval (0, 1).
+
+    @property
     def Energy(self) -> float:
         def hamiltonian() -> float:
             # Remove double-counting duplicates by multiplying the sum by 1/2.
@@ -103,7 +113,7 @@ class IsingModel:
 
         if self.Algorithm == Algorithms.Metropolis or self.Algorithm == Algorithms.Glauber:
             return hamiltonian()
-        elif self.Algorithm == Algorithms.SCA or self.Algorithm == Algorithms.MA or self.Algorithm.MMA:
+        elif self.Algorithm == Algorithms.SCA or self.Algorithm == Algorithms.fcSCA or self.Algorithm == Algorithms.MA or self.Algorithm.MMA:
             return hamiltonianOnBipartiteGraph()
         else:
             raise ValueError('Illeagal choises')
@@ -150,6 +160,16 @@ class IsingModel:
                 - self.__temperature * self.__rng.logistic(size=size)
             )
 
+        def flipConstrainedStochasticCellularAutomata():
+            size = len(self.__spins)
+            self.__previousSpins = self.__spins
+            bernoulli = self.__rng.binomial(size=size, n=1, p=self.__flipTrialRate)
+            self.__spins = np.sign(  # 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
+                self.__calcLocalMagneticField(self.__spins) + self.__pinningParameter * self.__spins
+                - self.__temperature * self.__rng.logistic(size=size)
+                + self.__spins * np.where(bernoulli == 1, np.inf, bernoulli)
+            )
+
         # 温度を下げなければ ``annealing'' ではないが、論文では区別していないので、ここでもこの名称を用いる。
         def momentumAnnealing():
             size = len(self.__spins)
@@ -174,6 +194,8 @@ class IsingModel:
             glauberDynamics()
         elif self.Algorithm == Algorithms.SCA:
             stochasticCellularAutomata()
+        elif self.Algorithm == Algorithms.fcSCA:
+            flipConstrainedStochasticCellularAutomata()
         elif self.Algorithm == Algorithms.MA:
             momentumAnnealing()
         elif self.Algorithm == Algorithms.MMA:
