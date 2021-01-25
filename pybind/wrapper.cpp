@@ -19,6 +19,7 @@ void Write(const IsingModel& self)
 	py::print("Algorithm:", self.AlgorithmToStr(self.GetCurrentAlgorithm()));
 	py::print("Temperature:", self.GetTemperature());
 	py::print("Pinning parameter:", self.GetPinningParameter());
+	py::print("Flip trial rate:", self.GetFlipTrialRate());
 }
 
 PYBIND11_MODULE(simulatorWithCpp, m)

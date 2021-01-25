@@ -11,6 +11,7 @@ IsingModel::IsingModel(const LinearBiases linear, const QuadraticBiases quadrati
 	: rand(std::make_unique<Rand>())
 	, temperature(0.e0)
 	, pinningParameter(0.e0)
+	, flipTrialRate(0.e0)
 	, algorithm(Algorithms::Metropolis)
 {
 	// spinsの添字と頂点の名前との対応表を作成。
@@ -75,9 +76,9 @@ double IsingModel::GetEnergy() const
 	case Algorithms::Metropolis:
 	case Algorithms::Glauber:
 	case Algorithms::HillClimbing:
+	case Algorithms::fcSCA:
 		return hamiltonian();
 	case Algorithms::SCA:
-	case Algorithms::fcSCA:
 	case Algorithms::MA:
 	case Algorithms::MMA:
 		return hamiltonianOnBipartiteGraph();
@@ -135,12 +136,14 @@ void IsingModel::Update()
 
 	auto flipConstrainedStochasticCellularAutomata = [this]() {
 		previousSpins = spins;
+		//auto bernoulli =  Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> bool { return rand->Bernoulli(flipTrialRate) ; });  // = true w.p. flipTrialRate and = false w.p. 1 - flipTrialRate.
 		spins = (
 			calcLocalMagneticField(spins) + pinningParameter * spins.cast<double>()
 			- temperature * Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double { return rand->Logistic(); })
 			+ Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double {
 				return rand->Bernoulli(flipTrialRate) ? 0.e0 : std::numeric_limits<double>::infinity();
 			}).cwiseProduct(spins.cast<double>())
+			//+ bernoulli.unaryExpr([](bool b) -> double { return b ? 0.e0 : std::numeric_limits<double>::infinity(); }).cwiseProduct(spins.cast<double>())
 		).array().sign().cast<Spin>();  // 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
 	};
 
@@ -222,4 +225,5 @@ void IsingModel::Write() const
 	std::cout << "Algorithm: " << AlgorithmToStr(algorithm) << std::endl;
 	std::cout << "Temperature: " << temperature << std::endl;
 	std::cout << "Pinning parameter: " << pinningParameter << std::endl;
+	std::cout << "Flip trial rate: " << flipTrialRate << std::endl;
 }

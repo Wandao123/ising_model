@@ -55,7 +55,7 @@ def Initialize() -> simulator.IsingModel:
     if isingModel.Algorithm == simulator.Algorithms.SCA or isingModel.Algorithm == simulator.Algorithms.MA:
         isingModel.PinningParameter = isingModel.CalcLargestEigenvalue() / 2
     elif isingModel.Algorithm == simulator.Algorithms.fcSCA:
-        isingModel.FlipTrialRate = 0.75
+        isingModel.FlipTrialRate = 0.75e0
     isingModel.Temperature = 2.e0 * np.sum([np.abs(J) for J in quadratic.values()]) + MaxNodes * isingModel.PinningParameter
 
     return isingModel

@@ -111,9 +111,9 @@ class IsingModel:
                 - 0.5e0 * np.inner(self.__spins + self.__previousSpins, self.__externalMagneticField)\
                 + 0.5e0 * self.__pinningParameter * (self.__spins.size - np.inner(self.__spins, self.__previousSpins))
 
-        if self.Algorithm == Algorithms.Metropolis or self.Algorithm == Algorithms.Glauber:
+        if self.Algorithm == Algorithms.Metropolis or self.Algorithm == Algorithms.Glauber or self.Algorithm == Algorithms.fcSCA:
             return hamiltonian()
-        elif self.Algorithm == Algorithms.SCA or self.Algorithm == Algorithms.fcSCA or self.Algorithm == Algorithms.MA or self.Algorithm.MMA:
+        elif self.Algorithm == Algorithms.SCA or self.Algorithm == Algorithms.MA or self.Algorithm.MMA:
             return hamiltonianOnBipartiteGraph()
         else:
             raise ValueError('Illeagal choises')
@@ -163,11 +163,11 @@ class IsingModel:
         def flipConstrainedStochasticCellularAutomata():
             size = len(self.__spins)
             self.__previousSpins = self.__spins
-            bernoulli = self.__rng.binomial(size=size, n=1, p=self.__flipTrialRate)
+            bernoulli = self.__rng.binomial(size=size, n=1, p=self.__flipTrialRate)  # = 1 w.p. flipTrialRate and = 0 w.p. 1 - flipTrialRate.
             self.__spins = np.sign(  # 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
                 self.__calcLocalMagneticField(self.__spins) + self.__pinningParameter * self.__spins
                 - self.__temperature * self.__rng.logistic(size=size)
-                + self.__spins * np.where(bernoulli == 1, np.inf, bernoulli)
+                + self.__spins * np.where(bernoulli == 0, np.inf, bernoulli)
             )
 
         # 温度を下げなければ ``annealing'' ではないが、論文では区別していないので、ここでもこの名称を用いる。
@@ -213,3 +213,4 @@ class IsingModel:
         print('Algorithm:', self.Algorithm.value)
         print('Temperature:', self.Temperature)
         print('Pinning parameter:', self.PinningParameter)
+        print('Flip trial rate:', self.FlipTrialRate)

@@ -65,7 +65,7 @@ int main()
         isingModel.SetPinningParameter(isingModel.CalcLargestEigenvalue() * 0.5e0);
         break;
     case IsingModel::Algorithms::fcSCA:
-        isingModel.SetFlipTrialRate(0.7e0);
+        isingModel.SetFlipTrialRate(0.75e0);
         break;
     }
     double initialTemperature = std::accumulate(
@@ -88,6 +88,7 @@ int main()
     ss << std::put_time(std::localtime(&time), "%Y-&m-&d %X");
     std::cout << ss.str() << std::endl;*/
 
+    isingModel.Write();
     for (auto n = 0; n <= maxTrials; n++) {
         //isingModel.SetTemperature(initialTemperature / (std::sqrt(maxNodes) * std::log(n + 1) + 1.e0));  // Alogarithmic cooling schedule.
         //isingModel.SetTemperature(initialTemperature / (n + 1.e0));  // A linear multiplicative cooling schedule.
