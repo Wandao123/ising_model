@@ -77,6 +77,7 @@ double IsingModel::GetEnergy() const
 	case Algorithms::HillClimbing:
 		return hamiltonian();
 	case Algorithms::SCA:
+	case Algorithms::fcSCA:
 	case Algorithms::MA:
 	case Algorithms::MMA:
 		return hamiltonianOnBipartiteGraph();
@@ -132,6 +133,17 @@ void IsingModel::Update()
 		).array().sign().cast<Spin>();  // 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
 	};
 
+	auto flipConstrainedStochasticCellularAutomata = [this]() {
+		previousSpins = spins;
+		spins = (
+			calcLocalMagneticField(spins) + pinningParameter * spins.cast<double>()
+			- temperature * Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double { return rand->Logistic(); })
+			+ Eigen::VectorXd::NullaryExpr(spins.size(), [this]() -> double {
+				return rand->Bernoulli(flipTrialRate) ? 0.e0 : std::numeric_limits<double>::infinity();
+			}).cwiseProduct(spins.cast<double>())
+		).array().sign().cast<Spin>();  // 実質起こらないが、符号関数に渡しているため、スピンが0になる場合がある。
+	};
+
 	// 温度を下げなければ ``annealing'' ではないが、論文では区別していないので、ここでもこの名称を用いる。
 	auto momentumAnnealing = [this]() {
 		Configuration temp = (
@@ -180,6 +192,9 @@ void IsingModel::Update()
 		break;
 	case Algorithms::SCA:
 		stochasticCellularAutomata();
+		break;
+	case Algorithms::fcSCA:
+		flipConstrainedStochasticCellularAutomata();
 		break;
 	case Algorithms::MA:
 		momentumAnnealing();

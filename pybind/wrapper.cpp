@@ -32,6 +32,7 @@ PYBIND11_MODULE(simulatorWithCpp, m)
 		.def_property_readonly("Energy", &IsingModel::GetEnergy)
 		.def_property("Temperature", &IsingModel::GetTemperature, &IsingModel::SetTemperature)
 		.def_property("PinningParameter", &IsingModel::GetPinningParameter, &IsingModel::SetPinningParameter)
+		.def_property("FlipTrialRate", &IsingModel::GetFlipTrialRate, &IsingModel::SetFlipTrialRate)
 		.def_property("Spins",
 			[](const IsingModel& self) -> std::map<Node, int> {
 				std::map<Node, int> temp;
@@ -63,6 +64,7 @@ PYBIND11_MODULE(simulatorWithCpp, m)
 		.value("Metropolis", IsingModel::Algorithms::Metropolis)
 		.value("Glauber", IsingModel::Algorithms::Glauber)
 		.value("SCA", IsingModel::Algorithms::SCA)
+		.value("fcSCA", IsingModel::Algorithms::fcSCA)
 		.value("MA", IsingModel::Algorithms::MA)
 		.value("MMA", IsingModel::Algorithms::MMA)
 		.value("HillClimbing", IsingModel::Algorithms::HillClimbing)

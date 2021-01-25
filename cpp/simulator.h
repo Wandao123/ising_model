@@ -2,6 +2,7 @@
 #define SIMULATOR_H
 
 #include <Eigen/Core>
+#include <algorithm>
 #include <cmath>
 #include <map>
 #include <memory>
@@ -103,6 +104,7 @@ public:
 		Metropolis,
 		Glauber,
 		SCA,
+		fcSCA,
 		MA,
 		MMA,
 		HillClimbing,
@@ -130,6 +132,8 @@ public:
 			return { "Glauber dynamics" };
 		case Algorithms::SCA:
 			return { "Stochastic cellular automata" };
+		case Algorithms::fcSCA:
+			return { "Flip-Constrained Stochastic Cellular Automata" };
 		case Algorithms::MA:
 			return { "Momentum annealing" };
 		case Algorithms::MMA:
@@ -169,7 +173,7 @@ public:
 
 	void SetTemperature(const double temperature)
 	{
-		this->temperature = (temperature >= 0.e0) ? temperature : 0.e0;
+		this->temperature = std::max(temperature, 0.e0);
 	}
 
 	double GetPinningParameter() const
@@ -179,7 +183,17 @@ public:
 
 	void SetPinningParameter(const double pinningParameter)
 	{
-		this->pinningParameter = (pinningParameter >= 0.e0) ? pinningParameter : 0.e0;
+		this->pinningParameter = std::max(pinningParameter, 0.e0);
+	}
+
+	double GetFlipTrialRate() const
+	{
+		return flipTrialRate;
+	}
+
+	void SetFlipTrialRate(const double flipTrialRate)
+	{
+		this->flipTrialRate = std::min(std::max(flipTrialRate, 0.e0), 1.e0);
 	}
 
 	std::map<Node, Spin> GetSpinsAsDictionary() const
@@ -215,7 +229,8 @@ private:
 
 	std::unique_ptr<Rand> rand;
 	double temperature;        // Including the Boltzmann constant: k_B T.
-	double pinningParameter;   // An parameter for the PCA.
+	double pinningParameter;   // Pinning parameter of SCA.
+	double flipTrialRate;      // Flip trial rate of flip-constained SCA.
 	Algorithms algorithm;
 	std::map<Node, std::size_t> nodeIndices;
 	Configuration spins;

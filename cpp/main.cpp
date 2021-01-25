@@ -58,11 +58,14 @@ int main()
     const unsigned int maxTrials = static_cast<int>(1.e4);
     auto quadratic = generateErdosRenyiEdges(maxNodes, probability);
     IsingModel isingModel({}, quadratic);
-    isingModel.ChangeAlgorithmTo(IsingModel::Algorithms::MA);
+    isingModel.ChangeAlgorithmTo(IsingModel::Algorithms::fcSCA);
     switch (isingModel.GetCurrentAlgorithm()) {
     case IsingModel::Algorithms::SCA:
     case IsingModel::Algorithms::MA:
         isingModel.SetPinningParameter(isingModel.CalcLargestEigenvalue() * 0.5e0);
+        break;
+    case IsingModel::Algorithms::fcSCA:
+        isingModel.SetFlipTrialRate(0.7e0);
         break;
     }
     double initialTemperature = std::accumulate(
