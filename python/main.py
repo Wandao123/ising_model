@@ -14,7 +14,7 @@ import simulator
 #import simulatorWithCpp as simulator
 
 MaxTrials = int(1.e3)
-MaxNodes = 256
+MaxNodes = 64
 Probability = 0.5e0
 
 # Erdo"s-Re'nyi random graph.
@@ -38,8 +38,8 @@ def GenerateSquareLatticeEdges(maxNodes: int) -> Dict[Tuple[int, int], float]:
 
 def Initialize() -> simulator.IsingModel:
     # Create a simulator.IsingModel instance.
-    #quadratic = GenerateErdosRenyiEdges(MaxNodes, Probability)
-    quadratic = GenerateSquareLatticeEdges(MaxNodes)
+    quadratic = GenerateErdosRenyiEdges(MaxNodes, Probability)
+    #quadratic = GenerateSquareLatticeEdges(MaxNodes)
     isingModel = simulator.IsingModel({}, quadratic)
     isingModel.Algorithm = simulator.Algorithms.fcSCA
 
@@ -55,7 +55,8 @@ def Initialize() -> simulator.IsingModel:
     if isingModel.Algorithm == simulator.Algorithms.SCA or isingModel.Algorithm == simulator.Algorithms.MA:
         isingModel.PinningParameter = isingModel.CalcLargestEigenvalue() / 2
     elif isingModel.Algorithm == simulator.Algorithms.fcSCA:
-        isingModel.FlipTrialRate = 0.75e0
+        isingModel.PinningParameter = isingModel.CalcLargestEigenvalue() / 8
+        isingModel.FlipTrialRate = 0.8e0
     isingModel.Temperature = 2.e0 * np.sum([np.abs(J) for J in quadratic.values()]) + MaxNodes * isingModel.PinningParameter
 
     return isingModel
@@ -99,5 +100,7 @@ if __name__ == '__main__':
     isingModel.Write()
     print()
     data = SampleData(isingModel, isingModel.Temperature)
-    print('The minimum energy found by the simulator: {}'.format(np.amin(data[:, 1])))
     DrawGraphFor(data)
+    print('The minimum energy found by the simulator: {}'.format(np.amin(data[:, 1])))
+    isingModel.Algorithm = simulator.Algorithms.Glauber
+    print('Real energy:', isingModel.Energy)
