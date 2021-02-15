@@ -41,9 +41,26 @@ QuadraticBiases generateSpinGlassEdges(const int maxNodes, const double probabil
     return result;
 }
 
+double calcEnergy(const IsingModel& isingModel)
+{
+    switch (isingModel.GetCurrentAlgorithm()) {
+    case IsingModel::Algorithms::Glauber:
+    case IsingModel::Algorithms::Metropolis:
+    case IsingModel::Algorithms::HillClimbing:
+        return isingModel.GetEnergy();
+    case IsingModel::Algorithms::SCA:
+    case IsingModel::Algorithms::MA:
+    case IsingModel::Algorithms::MMA:
+    case IsingModel::Algorithms::fcSCA:
+        return isingModel.GetEnergyOnBipartiteGraph();
+    default:
+        throw "Illeagal choises";
+    }
+}
+
 void printStatus(const IsingModel& isingModel)
 {
-    std::cout << "Energy = " << isingModel.GetEnergy() << std::endl;
+    std::cout << "Energy = " << calcEnergy(isingModel) << std::endl;
     std::cout << "{ ";
     for (auto spin : isingModel.GetSpinsAsDictionary())
         std::cout << "{" << std::get<int>(spin.first) << ": " << static_cast<int>(spin.second) << "}, ";
@@ -65,6 +82,7 @@ int main()
         isingModel.SetPinningParameter(isingModel.CalcLargestEigenvalue() * 0.5e0);
         break;
     case IsingModel::Algorithms::fcSCA:
+        isingModel.SetPinningParameter(isingModel.CalcLargestEigenvalue() * 0.125e0);
         isingModel.SetFlipTrialRate(0.75e0);
         break;
     }
@@ -96,7 +114,7 @@ int main()
         isingModel.SetTemperature(initialTemperature * std::pow(0.99e0, n));  // An exponential cooling schedule.
         isingModel.Update();
         std::cout << std::setw(7) << std::left << n
-            << std::setw(16) << std::scientific << std::setprecision(5) << isingModel.GetEnergy()
+            << std::setw(16) << std::scientific << std::setprecision(5) << calcEnergy(isingModel)
             << std::setw(16) << std::scientific << std::setprecision(7) << isingModel.GetTemperature()
             << std::endl;
     }

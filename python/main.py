@@ -71,7 +71,15 @@ def SampleData(isingModel: simulator.IsingModel, initialTemperature: float) -> L
         #isingModel.Temperature = 1.e2 * np.exp(-1.e-2 * n)  # B. FK.'s results.
         #isingModel.Temperature = np.exp(-1.e-2 * (n - 200))
         isingModel.Update()
-        result = np.append(result, np.array([n, isingModel.Energy, isingModel.Temperature], dtype=np.float).reshape((1, 3)), axis=0)
+        if isingModel.Algorithm == simulator.Algorithms.Glauber or isingModel.Algorithm == simulator.Algorithms.Metropolis:
+            energy = isingModel.Energy
+        elif isingModel.Algorithm == simulator.Algorithms.SCA or isingModel.Algorithm == simulator.Algorithms.MA:
+            energy = isingModel.EnergyOnBipartiteGraph
+        elif isingModel.Algorithm == simulator.Algorithms.fcSCA:
+            energy = isingModel.EnergyOnBipartiteGraph
+        else:
+            raise ValueError('Illeagal choises')
+        result = np.append(result, np.array([n, energy, isingModel.Temperature], dtype=np.float).reshape((1, 3)), axis=0)
         if n % (MaxTrials // 10) == 0:
             print('Complete {0} times.  Energy={1}, Temperature={2}.'.format(result[n][0], result[n][1], result[n][2]))
     if result.size > 0:
@@ -102,5 +110,3 @@ if __name__ == '__main__':
     data = SampleData(isingModel, isingModel.Temperature)
     DrawGraphFor(data)
     print('The minimum energy found by the simulator: {}'.format(np.amin(data[:, 1])))
-    isingModel.Algorithm = simulator.Algorithms.Glauber
-    print('Real energy:', isingModel.Energy)

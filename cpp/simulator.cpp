@@ -61,31 +61,15 @@ double IsingModel::CalcLargestEigenvalue() const
 
 double IsingModel::GetEnergy() const
 {
-	auto hamiltonian = [this]() -> double {
-		// Remove double-counting duplicates by multiplying the sum by 1/2.
-		return -spins.cast<double>().transpose() * (0.5e0 * couplingCoefficients * spins.cast<double>() + externalMagneticField);
-	};
+	// Remove double-counting duplicates by multiplying the sum by 1/2.
+	return -spins.cast<double>().transpose() * (0.5e0 * couplingCoefficients * spins.cast<double>() + externalMagneticField);
+}
 
-	auto hamiltonianOnBipartiteGraph = [this]() -> double {
-		return -0.5e0 * spins.cast<double>().transpose() * couplingCoefficients * spins.cast<double>()
-			- 0.5e0 * externalMagneticField.dot(spins.cast<double>() + previousSpins.cast<double>())
-			+ 0.5e0 * pinningParameter * (spins.size() - spins.cast<double>().dot(previousSpins.cast<double>()));
-	};
-
-	switch (algorithm) {
-	case Algorithms::Metropolis:
-	case Algorithms::Glauber:
-	case Algorithms::HillClimbing:
-	case Algorithms::fcSCA:
-		return hamiltonian();
-	case Algorithms::SCA:
-	case Algorithms::MA:
-	case Algorithms::MMA:
-		return hamiltonianOnBipartiteGraph();
-	default:
-		return std::nan("");
-		break;
-	}
+double IsingModel::GetEnergyOnBipartiteGraph() const
+{
+	return -0.5e0 * spins.cast<double>().transpose() * couplingCoefficients * spins.cast<double>()
+		- 0.5e0 * externalMagneticField.dot(spins.cast<double>() + previousSpins.cast<double>())
+		+ 0.5e0 * pinningParameter * (spins.size() - spins.cast<double>().dot(previousSpins.cast<double>()));
 }
 
 void IsingModel::GiveSpins(const ConfigurationsType configurationType)

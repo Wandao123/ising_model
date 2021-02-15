@@ -101,37 +101,28 @@ class IsingModel:
 
     @property
     def Energy(self) -> float:
-        def hamiltonian() -> float:
-            # Remove double-counting duplicates by multiplying the sum by 1/2.
-            return -0.5e0 * np.matmul(self.__spins, np.matmul(self.__couplingCoefficients, self.__spins))\
-                - np.inner(self.__spins, self.__externalMagneticField)
+        # Remove double-counting duplicates by multiplying the sum by 1/2.
+        return -0.5e0 * np.matmul(self.__spins, np.matmul(self.__couplingCoefficients, self.__spins))\
+            - np.inner(self.__spins, self.__externalMagneticField)
 
-        def hamiltonianOnBipartiteGraph() -> float:
-            return -0.5e0 * np.matmul(self.__spins, np.matmul(self.__couplingCoefficients, self.__previousSpins))\
-                - 0.5e0 * np.inner(self.__spins + self.__previousSpins, self.__externalMagneticField)\
-                + 0.5e0 * self.__pinningParameter * (self.__spins.size - np.inner(self.__spins, self.__previousSpins))
+        #def hamiltonianWithFlipRate() -> float:
+        #    temp = np.matmul(self.__couplingCoefficients, self.__previousSpins) + self.__externalMagneticField + self.__pinningParameter * self.__previousSpins
+        #    return -0.5e0 * np.matmul(self.__spins, temp)\
+        #        - 0.5e0 * np.inner(self.__previousSpins, self.__externalMagneticField)\
+        #        + 0.5e0 * self.__pinningParameter * self.__spins.size\
+        #        + self.__temperature * np.sum(
+        #            np.log(1 + (1 - self.__flipTrialRate) * np.exp(-temp * self.__previousSpins / self.__temperature))
+        #            - np.log(
+        #                0.5e0 * (self.__flipTrialRate + 1 + (1 - self.__flipTrialRate) * np.exp(-temp * self.__spins / self.__temperature))
+        #                + 0.5e0 * self.__spins * self.__previousSpins * (1 - self.__flipTrialRate) * (1 + np.exp(-temp * self.__spins / self.__temperature))
+        #            )
+        #        )
 
-        def hamiltonianWithFlipRate() -> float:
-            temp = np.matmul(self.__couplingCoefficients, self.__previousSpins) + self.__externalMagneticField + self.__pinningParameter * self.__previousSpins
-            return -0.5e0 * np.matmul(self.__spins, temp)\
-                - 0.5e0 * np.inner(self.__previousSpins, self.__externalMagneticField)\
-                + 0.5e0 * self.__pinningParameter * self.__spins.size\
-                + self.__temperature * np.sum(
-                    np.log(1 + (1 - self.__flipTrialRate) * np.exp(-temp * self.__previousSpins / self.__temperature))
-                    - np.log(
-                        0.5e0 * (self.__flipTrialRate + 1 + (1 - self.__flipTrialRate) * np.exp(-temp * self.__spins / self.__temperature))
-                        + 0.5e0 * self.__spins * self.__previousSpins * (1 - self.__flipTrialRate) * (1 + np.exp(-temp * self.__spins / self.__temperature))
-                    )
-                )
-
-        if self.Algorithm == Algorithms.Metropolis or self.Algorithm == Algorithms.Glauber:
-            return hamiltonian()
-        elif self.Algorithm == Algorithms.SCA or self.Algorithm == Algorithms.MA or self.Algorithm.MMA:
-            return hamiltonianOnBipartiteGraph()
-        elif self.Algorithm == Algorithms.fcSCA:
-            return hamiltonianWithFlipRate()
-        else:
-            raise ValueError('Illeagal choises')
+    @property
+    def EnergyOnBipartiteGraph(self) -> float:
+        return -0.5e0 * np.matmul(self.__spins, np.matmul(self.__couplingCoefficients, self.__previousSpins))\
+            - 0.5e0 * np.inner(self.__spins + self.__previousSpins, self.__externalMagneticField)\
+            + 0.5e0 * self.__pinningParameter * (self.__spins.size - np.inner(self.__spins, self.__previousSpins))
 
     def CalcLargestEigenvalue(self) -> float:
         return np.amax(LA.eigvalsh(-self.__couplingCoefficients))

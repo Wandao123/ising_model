@@ -119,6 +119,7 @@ public:
 	IsingModel(const LinearBiases linear, const QuadraticBiases quadratic);
 	double CalcLargestEigenvalue() const;
 	double GetEnergy() const;
+	double GetEnergyOnBipartiteGraph() const;
 	void GiveSpins(const ConfigurationsType configurationType);
 	void Update();
 	void Write() const;
