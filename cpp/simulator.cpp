@@ -6,6 +6,30 @@
 #include <limits>
 #include <set>
 
+using namespace Simulator;
+
+std::string Simulator::AlgorithmToStr(const Algorithms algorithm)
+{
+	switch (algorithm) {
+	case Algorithms::Metropolis:
+		return { "Metropolis method" };
+	case Algorithms::Glauber:
+		return { "Glauber dynamics" };
+	case Algorithms::SCA:
+		return { "Stochastic cellular automata" };
+	case Algorithms::fcSCA:
+		return { "Flip-Constrained Stochastic Cellular Automata" };
+	case Algorithms::MA:
+		return { "Momentum annealing" };
+	case Algorithms::MMA:
+		return { "Modified momentum annealing" };
+	case Algorithms::HillClimbing:
+		return { "Hill climbing" };
+	default:
+		return { "Warning: Unknown type." };
+	}
+}
+
 // quadraticのキーのペア (i, j) は順番が i < j となっていなければならない。
 IsingModel::IsingModel(const LinearBiases linear, const QuadraticBiases quadratic)
 	: rand(std::make_unique<Rand>())

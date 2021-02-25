@@ -92,10 +92,11 @@ def SampleData(isingModel: simulator.IsingModel, initialTemperature: float) -> L
         )
     return result
 
-def DrawGraphFor(data: List[float]):
+def DrawGraphFor(data: List[float], title='Ising model'):
     fig = plt.figure(figsize=(4, 4), dpi=200)
     ax = fig.add_subplot(111)
     ax.plot(data[:, 0], data[:, 1])
+    ax.set_title(title)
     plt.show()
 
 if __name__ == '__main__':
@@ -108,5 +109,5 @@ if __name__ == '__main__':
     isingModel.Write()
     print()
     data = SampleData(isingModel, isingModel.Temperature)
-    DrawGraphFor(data)
+    DrawGraphFor(data, simulator.AlgorithmToStr(isingModel.Algorithm))
     print('The minimum energy found by the simulator: {}'.format(np.amin(data[:, 1])))

@@ -89,17 +89,12 @@ private:
 	std::mt19937_64 mt;
 };
 
-using Node = std::variant<int, std::string>;
-using Edge = std::pair<Node, Node>;
-using LinearBiases = std::map<Node, double>;
-using QuadraticBiases = std::map<Edge, double>;
+namespace Simulator {
+	using Node = std::variant<int, std::string>;
+	using Edge = std::pair<Node, Node>;
+	using LinearBiases = std::map<Node, double>;
+	using QuadraticBiases = std::map<Edge, double>;
 
-class IsingModel {
-public:
-	enum class Spin : int {  // ライブラリ側でも型変換できるように、enum classではなくenumを使う。
-		Down = -1,
-		Up = +1
-	};
 	enum class Algorithms {
 		Metropolis,
 		Glauber,
@@ -110,149 +105,137 @@ public:
 		HillClimbing,
 		SIZE
 	};
-	enum class ConfigurationsType {
-		AllDown,
-		AllUp,
-		Uniform
-	};
 
-	IsingModel(const LinearBiases linear, const QuadraticBiases quadratic);
-	double CalcLargestEigenvalue() const;
-	double GetEnergy() const;
-	double GetEnergyOnBipartiteGraph() const;
-	void GiveSpins(const ConfigurationsType configurationType);
-	void Update();
-	void Write() const;
+	std::string AlgorithmToStr(const Algorithms algorithm);
 
-	std::string AlgorithmToStr(Algorithms algorithm) const
-	{
-		switch (algorithm) {
-		case Algorithms::Metropolis:
-			return { "Metropolis method" };
-		case Algorithms::Glauber:
-			return { "Glauber dynamics" };
-		case Algorithms::SCA:
-			return { "Stochastic cellular automata" };
-		case Algorithms::fcSCA:
-			return { "Flip-Constrained Stochastic Cellular Automata" };
-		case Algorithms::MA:
-			return { "Momentum annealing" };
-		case Algorithms::MMA:
-			return { "Modified momentum annealing" };
-		case Algorithms::HillClimbing:
-			return { "Hill climbing" };
-		default:
-			return { "Warning: Unknown type." };
+	class IsingModel {
+	public:
+		enum class Spin : int {  // ライブラリ側でも型変換できるように、enum classではなくenumを使う。
+			Down = -1,
+			Up = +1
+		};
+		enum class ConfigurationsType {
+			AllDown,
+			AllUp,
+			Uniform
+		};
+
+		IsingModel(const LinearBiases linear, const QuadraticBiases quadratic);
+		double CalcLargestEigenvalue() const;
+		double GetEnergy() const;
+		double GetEnergyOnBipartiteGraph() const;
+		void GiveSpins(const ConfigurationsType configurationType);
+		void Update();
+		void Write() const;
+
+		void SetSeed()
+		{
+			rand = std::make_unique<Rand>();
 		}
-	}
 
-	void SetSeed()
-	{
-		rand = std::make_unique<Rand>();
-	}
+		void SetSeed(const unsigned int seed)
+		{
+			SetSeed();
+			rand->Seed(seed);
+		}
 
-	void SetSeed(const unsigned int seed)
-	{
-		SetSeed();
-		rand->Seed(seed);
-	}
+		Algorithms GetCurrentAlgorithm() const
+		{
+			return algorithm;
+		}
 
-	Algorithms GetCurrentAlgorithm() const
-	{
-		return algorithm;
-	}
+		void ChangeAlgorithmTo(const Algorithms algorithm)
+		{
+			this->algorithm = algorithm;
+		}
 
-	void ChangeAlgorithmTo(const Algorithms algorithm)
-	{
-		this->algorithm = algorithm;
-	}
+		double GetTemperature() const
+		{
+			return temperature;
+		}
 
-	double GetTemperature() const
-	{
-		return temperature;
-	}
+		void SetTemperature(const double temperature)
+		{
+			this->temperature = std::max(temperature, 0.e0);
+		}
 
-	void SetTemperature(const double temperature)
-	{
-		this->temperature = std::max(temperature, 0.e0);
-	}
+		double GetPinningParameter() const
+		{
+			return pinningParameter;
+		}
 
-	double GetPinningParameter() const
-	{
-		return pinningParameter;
-	}
+		void SetPinningParameter(const double pinningParameter)
+		{
+			this->pinningParameter = std::max(pinningParameter, 0.e0);
+		}
 
-	void SetPinningParameter(const double pinningParameter)
-	{
-		this->pinningParameter = std::max(pinningParameter, 0.e0);
-	}
+		double GetFlipTrialRate() const
+		{
+			return flipTrialRate;
+		}
 
-	double GetFlipTrialRate() const
-	{
-		return flipTrialRate;
-	}
+		void SetFlipTrialRate(const double flipTrialRate)
+		{
+			this->flipTrialRate = std::min(std::max(flipTrialRate, 0.e0), 1.e0);
+		}
 
-	void SetFlipTrialRate(const double flipTrialRate)
-	{
-		this->flipTrialRate = std::min(std::max(flipTrialRate, 0.e0), 1.e0);
-	}
+		std::map<Node, Spin> GetSpinsAsDictionary() const
+		{
+			std::map<Node, Spin> result;
+			for (const auto& node : nodeIndices)
+				result[node.first] = spins[node.second];
+			return result;
+		}
 
-	std::map<Node, Spin> GetSpinsAsDictionary() const
-	{
-		std::map<Node, Spin> result;
-		for (const auto& node : nodeIndices)
-			result[node.first] = spins[node.second];
-		return result;
-	}
+		void SetSpinsAsDictionary(const std::map<Node, Spin> spins)
+		{
+			for (const auto& spin : spins)
+				this->spins[nodeIndices[spin.first]] = spin.second;
+		}
 
-	void SetSpinsAsDictionary(const std::map<Node, Spin> spins)
-	{
-		for (const auto& spin : spins)
-			this->spins[nodeIndices[spin.first]] = spin.second;
-	}
+		Eigen::VectorXi GetSpins() const
+		{
+			return spins.cast<int>();
+		}
 
-	Eigen::VectorXi GetSpins() const
-	{
-		return spins.cast<int>();
-	}
+		Eigen::VectorXd GetExternalMagneticField() const
+		{
+			return externalMagneticField;
+		}
 
-	Eigen::VectorXd GetExternalMagneticField() const
-	{
-		return externalMagneticField;
-	}
+		Eigen::MatrixXd GetCouplingCoefficients() const
+		{
+			return couplingCoefficients;
+		}
+	private:
+		using Configuration = Eigen::Matrix<Spin, Eigen::Dynamic, 1>;
 
-	Eigen::MatrixXd GetCouplingCoefficients() const
-	{
-		return couplingCoefficients;
-	}
-private:
-	using Configuration = Eigen::Matrix<Spin, Eigen::Dynamic, 1>;
+		std::unique_ptr<Rand> rand;
+		double temperature;        // Including the Boltzmann constant: k_B T.
+		double pinningParameter;   // Pinning parameter of SCA.
+		double flipTrialRate;      // Flip trial rate of flip-constained SCA.
+		Algorithms algorithm;
+		std::map<Node, std::size_t> nodeIndices;
+		Configuration spins;
+		Configuration previousSpins;
+		Eigen::VectorXd externalMagneticField;
+		Eigen::MatrixXd couplingCoefficients;
 
-	std::unique_ptr<Rand> rand;
-	double temperature;        // Including the Boltzmann constant: k_B T.
-	double pinningParameter;   // Pinning parameter of SCA.
-	double flipTrialRate;      // Flip trial rate of flip-constained SCA.
-	Algorithms algorithm;
-	std::map<Node, std::size_t> nodeIndices;
-	Configuration spins;
-	Configuration previousSpins;
-	Eigen::VectorXd externalMagneticField;
-	Eigen::MatrixXd couplingCoefficients;
+		double calcLocalMagneticField(const unsigned int nodeIndex) const
+		{
+			return (couplingCoefficients * spins.cast<double>())(nodeIndex) + externalMagneticField(nodeIndex);
+		}
 
-	double calcLocalMagneticField(const unsigned int nodeIndex) const
-	{
-		return (couplingCoefficients * spins.cast<double>())(nodeIndex) + externalMagneticField(nodeIndex);
-	}
+		Eigen::VectorXd calcLocalMagneticField(const Configuration& spins) const
+		{
+			return couplingCoefficients * spins.cast<double>() + externalMagneticField;
+		}
 
-	Eigen::VectorXd calcLocalMagneticField(const Configuration& spins) const
-	{
-		return couplingCoefficients * spins.cast<double>() + externalMagneticField;
-	}
-
-	Spin flip(const Spin spin) const
-	{
-		return (spin == Spin::Down) ? Spin::Up : Spin::Down;
-	}
-};
+		Spin flip(const Spin spin) const
+		{
+			return (spin == Spin::Down) ? Spin::Up : Spin::Down;
+		}
+	};
+}
 
 #endif // !SIMULATOR_H

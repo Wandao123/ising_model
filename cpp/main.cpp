@@ -9,11 +9,11 @@
 
 const unsigned int Seed = 32;
 
-QuadraticBiases generateErdosRenyiEdges(const int maxNodes, const double probability)
+Simulator::QuadraticBiases generateErdosRenyiEdges(const int maxNodes, const double probability)
 {
     Rand rand;
     rand.Seed(Seed);
-    QuadraticBiases result;
+    Simulator::QuadraticBiases result;
     for (auto i = 0; i < maxNodes; i++) {
         for (auto j = i + 1; j < maxNodes; j++) {
             if (rand.Bernoulli(probability))
@@ -25,11 +25,11 @@ QuadraticBiases generateErdosRenyiEdges(const int maxNodes, const double probabi
     return result;
 }
 
-QuadraticBiases generateSpinGlassEdges(const int maxNodes, const double probability)
+Simulator::QuadraticBiases generateSpinGlassEdges(const int maxNodes, const double probability)
 {
     Rand rand;
     rand.Seed(Seed);
-    QuadraticBiases result;
+    Simulator::QuadraticBiases result;
     for (auto i = 0; i < maxNodes; i++) {
         for (auto j = i + 1; j < maxNodes; j++) {
             if (rand.Bernoulli(probability))
@@ -41,24 +41,24 @@ QuadraticBiases generateSpinGlassEdges(const int maxNodes, const double probabil
     return result;
 }
 
-double calcEnergy(const IsingModel& isingModel)
+double calcEnergy(const Simulator::IsingModel& isingModel)
 {
     switch (isingModel.GetCurrentAlgorithm()) {
-    case IsingModel::Algorithms::Glauber:
-    case IsingModel::Algorithms::Metropolis:
-    case IsingModel::Algorithms::HillClimbing:
+    case Simulator::Algorithms::Glauber:
+    case Simulator::Algorithms::Metropolis:
+    case Simulator::Algorithms::HillClimbing:
         return isingModel.GetEnergy();
-    case IsingModel::Algorithms::SCA:
-    case IsingModel::Algorithms::MA:
-    case IsingModel::Algorithms::MMA:
-    case IsingModel::Algorithms::fcSCA:
+    case Simulator::Algorithms::SCA:
+    case Simulator::Algorithms::MA:
+    case Simulator::Algorithms::MMA:
+    case Simulator::Algorithms::fcSCA:
         return isingModel.GetEnergyOnBipartiteGraph();
     default:
         throw "Illeagal choises";
     }
 }
 
-void printStatus(const IsingModel& isingModel)
+void printStatus(const Simulator::IsingModel& isingModel)
 {
     std::cout << "Energy = " << calcEnergy(isingModel) << std::endl;
     std::cout << "{ ";
@@ -74,21 +74,21 @@ int main()
     const double probability = 0.5e0;
     const unsigned int maxTrials = static_cast<int>(1.e4);
     auto quadratic = generateErdosRenyiEdges(maxNodes, probability);
-    IsingModel isingModel({}, quadratic);
-    isingModel.ChangeAlgorithmTo(IsingModel::Algorithms::fcSCA);
+    Simulator::IsingModel isingModel({}, quadratic);
+    isingModel.ChangeAlgorithmTo(Simulator::Algorithms::fcSCA);
     switch (isingModel.GetCurrentAlgorithm()) {
-    case IsingModel::Algorithms::SCA:
-    case IsingModel::Algorithms::MA:
+    case Simulator::Algorithms::SCA:
+    case Simulator::Algorithms::MA:
         isingModel.SetPinningParameter(isingModel.CalcLargestEigenvalue() * 0.5e0);
         break;
-    case IsingModel::Algorithms::fcSCA:
+    case Simulator::Algorithms::fcSCA:
         isingModel.SetPinningParameter(isingModel.CalcLargestEigenvalue() * 0.125e0);
         isingModel.SetFlipTrialRate(0.75e0);
         break;
     }
     double initialTemperature = std::accumulate(
         quadratic.begin(), quadratic.end(), 0.e0,
-        [](double acc, const QuadraticBiases::value_type& p) -> double { return acc + std::abs(p.second); }
+        [](double acc, const Simulator::QuadraticBiases::value_type& p) -> double { return acc + std::abs(p.second); }
     ) + isingModel.GetPinningParameter();
     isingModel.SetTemperature(initialTemperature);
     //isingModel.SetSeed(Seed * 2);
@@ -97,7 +97,7 @@ int main()
     Rand rand;
     rand.Seed(Seed * 2);
     for (auto& spin : spins)
-        spin.second = rand.Choice(std::vector<IsingModel::Spin>{ IsingModel::Spin::Down, IsingModel::Spin::Up });
+        spin.second = rand.Choice(std::vector<Simulator::IsingModel::Spin>{ Simulator::IsingModel::Spin::Down, Simulator::IsingModel::Spin::Up });
     isingModel.SetSpinsAsDictionary(spins);
     isingModel.SetSeed();
 

@@ -16,6 +16,9 @@ class Algorithms(Enum):
     MA = 'Momentum Annealing'
     MMA = 'Modified Momentum Annealing'
 
+def AlgorithmToStr(algorithm: Algorithms) -> str:
+    return algorithm.value
+
 class ConfigurationsType(Enum):
     AllDown = auto()
     AllUp = auto()
